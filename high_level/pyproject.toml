@@ -1,0 +1,44 @@
+[project]
+name = "issp"
+description = "Information Systems Security and Privacy exercises and lab material."
+version = "0.2.0"
+authors = [
+    { name = "Ivano Bilenchi", email = "ivano.bilenchi@poliba.it" }
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+requires-python = ">=3.12"
+dependencies = [
+    "cryptography>=46.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/IvanoBilenchi/issp"
+
+[build-system]
+requires = ["setuptools>=61.0.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    "ANN101",   # missing-type-self
+    "ANN102",   # missing-type-cls
+    "BLE001",   # blind-except
+    "D203",     # one-blank-line-before-class
+    "D212",     # multi-line-summary-first-line
+    "PD",       # pandas
+    "PLC0414",  # useless-import-alias
+    "PLR09",    # too-many-*
+    "T201",     # print
+]
+isort.combine-as-imports = true
+
+[tool.ruff.lint.per-file-ignores]
+"!src/**.py" = ["D", "INP001", "S105"]
+"src/issp/res/**.py" = ["D", "INP001", "S105"]
