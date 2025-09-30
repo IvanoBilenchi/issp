@@ -7,6 +7,7 @@ import json
 import sys
 import threading
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
@@ -14,7 +15,7 @@ from . import _log as log
 from ._util import snake_to_camel
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Sequence
     from typing import Any
 
 
@@ -109,8 +110,14 @@ class AccessQueue:
     def request_send(self, priority: int = 0) -> None:
         self._send_queue.enqueue(priority)
 
+    def give_up_send(self) -> None:
+        self._send_queue.dequeue()
+
     def request_receive(self, priority: int = 0) -> None:
         self._rcv_queue.enqueue(priority)
+
+    def give_up_receive(self) -> None:
+        self._rcv_queue.dequeue()
 
     def wait(self, turns: int = 1) -> None:
         for _ in range(turns):
@@ -128,8 +135,9 @@ class Channel:
 
     def receive(self, recipient: str, *, priority: int = 0) -> Message:
         self._access_queue.request_receive(priority=priority)
-        if (msg := self.stack.read()) and msg.recipient == recipient:
-            return msg
+        if (msg := self.stack[-1].read()) and msg.recipient == recipient:
+            return self.stack.read()
+        self._access_queue.give_up_receive()
         return self.receive(recipient, priority=priority)
 
     def peek(self) -> Message:
@@ -139,23 +147,36 @@ class Channel:
     def wait(self, turns: int = 1) -> None:
         self._access_queue.wait(turns)
 
+    def with_stack(self, stack: Layer, *, keep_log_top: bool = True) -> Channel:
+        stack = stack | self.stack[-1]
+        if keep_log_top and isinstance(self.stack, LoggingLayer):
+            stack = LoggingLayer(self.stack.tag) | stack
+        return Channel(stack, self._access_queue)
+
 
 class Layer:
     def __init__(self) -> None:
-        self.upper_layer: Layer | None = None
         self.lower_layer: Layer | None = None
 
     def __or__(self, base: object) -> Layer:
         if not isinstance(base, Layer):
             err_msg = f"Unsupported operand type(s) for |: '{type(self)}' and '{type(base)}'"
             raise TypeError(err_msg)
-        root_layer = self.bottom_layer()
-        if isinstance(root_layer, PhysicalLayer):
-            err_msg = "You've hit rock bottom, my friend"
-            raise TypeError(err_msg)
-        root_layer.lower_layer = base
-        base.upper_layer = root_layer
+        self.lower_layer = base
         return self
+
+    def __len__(self) -> int:
+        return 1 + (len(self.lower_layer) if self.lower_layer else 0)
+
+    def __getitem__(self, index: int) -> Layer:
+        if index == 0:
+            return self
+        if index < 0:
+            index = len(self) + index
+        if self.lower_layer is None:
+            msg = "Layer index out of range"
+            raise IndexError(msg)
+        return self.lower_layer[index - 1]
 
     def write(self, msg: Message) -> None:
         if self.lower_layer is None:
@@ -169,28 +190,16 @@ class Layer:
             raise ValueError(err_msg)
         return self.lower_layer.read()
 
-    def get_layer(self, depth: int) -> Layer:
-        if depth == 0:
-            return self
-        if depth < 0:
-            if self.lower_layer is None:
-                return self
-            return self.lower_layer.get_layer(depth + 1)
-        if self.upper_layer is None:
-            return self
-        return self.upper_layer.get_layer(depth - 1)
-
-    def top_layer(self) -> Layer:
-        return self if self.upper_layer is None else self.upper_layer.top_layer()
-
-    def bottom_layer(self) -> Layer:
-        return self if self.lower_layer is None else self.lower_layer.bottom_layer()
-
 
 class PhysicalLayer(Layer):
     def __init__(self) -> None:
         super().__init__()
         self._msg = Message.empty()
+
+    def __or__(self, base: object) -> Layer:
+        del base  # unused
+        err_msg = "You've hit rock bottom, my friend"
+        raise TypeError(err_msg)
 
     def write(self, msg: Message) -> None:
         self._msg = msg
@@ -202,25 +211,44 @@ class PhysicalLayer(Layer):
 class LoggingLayer(Layer):
     def __init__(self, tag: str = "") -> None:
         super().__init__()
-        self.tag = f"[{tag}] " if tag else ""
+        self.tag = tag
+
+    def _format_tag(self) -> str:
+        return f"[{self.tag}] " if self.tag else ""
 
     def write(self, msg: Message) -> None:
+        log.info("%sSent: %s", self._format_tag(), msg)
         super().write(msg)
-        log.info("%sSent: %s", self.tag, msg)
 
     def read(self) -> Message:
         msg = super().read()
-        log.info("%sReceived: %s", self.tag, msg)
+        log.info("%sReceived: %s", self._format_tag(), msg)
         return msg
 
 
-def start_actors(*args: Callable[[Channel], None], interval: float = 1.0) -> None:
+class Actor:
+    def __init__(
+        self,
+        target: Callable[..., None],
+        name: str | None = None,
+        stacks: Sequence[Layer] = (),
+        data: Sequence[Any] = (),
+    ) -> None:
+        self.target = target
+        self.name = name or snake_to_camel(target.__name__)
+        self.stacks = stacks
+        self.data = data
+
+
+def start_actors(*args: Callable[[Channel], None] | Actor, interval: float = 1.0) -> None:
     phys = PhysicalLayer()
     queue = AccessQueue(interval=interval)
-    for actor in args:
-        stack = LoggingLayer(tag=snake_to_camel(actor.__name__)) | phys
-        channel = Channel(stack, queue)
-        threading.Thread(target=actor, args=(channel,)).start()
+    for arg in args:
+        actor = Actor(arg) if isinstance(arg, Callable) else arg
+        stacks = (s | phys for s in actor.stacks)
+        stacks = (LoggingLayer(tag=actor.name) | s for s in (phys, *stacks))
+        channels = tuple(Channel(s, queue) for s in stacks)
+        threading.Thread(target=actor.target, args=(*channels, *actor.data)).start()
 
 
 class BytesAwareJSONEncoder(json.JSONEncoder):
