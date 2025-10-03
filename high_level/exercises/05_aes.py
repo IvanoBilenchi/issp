@@ -5,35 +5,36 @@
 # Hints:
 # - Have a look at the cryprography.hazmat.primitives.ciphers module:
 #   https://cryptography.io/en/latest/hazmat/primitives/symmetric-encryption
+# - The library also provides primitives for padding:
+#   https://cryptography.io/en/latest/hazmat/primitives/padding
 
 import os
 
-from issp import Channel, Message, log, start_actors
+from issp import Actor, Channel, Message, log
 
-KEY = os.urandom(32)
 BLOCK_SIZE = 16
 
 
 def encrypt(data: bytes, key: bytes, iv: bytes) -> bytes:
-    # Implement AES256 CBC encryption with PKCS7 padding here.
+    # TO-DO: Implement AES256 CBC encryption with PKCS7 padding.
     return data
 
 
 def decrypt(data: bytes, key: bytes, iv: bytes) -> bytes:
-    # Implement AES256 CBC decryption with PKCS7 unpadding here.
+    # TO-DO: Implement AES256 CBC decryption with PKCS7 unpadding.
     return data
 
 
-def alice(channel: Channel) -> None:
+def alice(channel: Channel, key: bytes) -> None:
     msg = Message("Alice", "Bob", b"Here is the top-secret PIN, keep it safe: 42")
     log.info("[Alice] Encrypted: %s", msg)
-    # Encrypt the message body here.
+    # TO-DO: Encrypt the message body.
     channel.send(msg)
 
 
-def bob(channel: Channel) -> None:
+def bob(channel: Channel, key: bytes) -> None:
     msg = channel.receive("Bob")
-    # Decrypt the message body here.
+    # TO-DO: Decrypt the message body.
     log.info("[Bob] Decrypted: %s", msg)
 
 
@@ -41,5 +42,10 @@ def mallory(channel: Channel) -> None:
     channel.peek()
 
 
+def main() -> None:
+    key = os.urandom(32)
+    Actor.start(Actor(alice, data=(key,)), Actor(bob, data=(key,)), Actor(mallory, priority=1))
+
+
 if __name__ == "__main__":
-    start_actors(alice, bob, mallory)
+    main()

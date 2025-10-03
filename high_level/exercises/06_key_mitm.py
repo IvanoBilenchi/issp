@@ -8,7 +8,7 @@
 
 import os
 
-from issp import Channel, Message, log, start_actors, xor
+from issp import Actor, Channel, Message, log, xor
 
 
 def encrypt(data: bytes, key: bytes) -> bytes:
@@ -21,9 +21,7 @@ def decrypt(data: bytes, key: bytes) -> bytes:
 
 def alice(channel: Channel) -> None:
     key = os.urandom(16)
-
     channel.send(Message("Alice", "Bob", key))
-    channel.receive("Alice")
 
     msg = Message("Alice", "Bob", b"Hello, Bob!")
     log.info("[Alice] Encrypted: %s", msg)
@@ -34,7 +32,6 @@ def alice(channel: Channel) -> None:
 def bob(channel: Channel) -> None:
     msg = channel.receive("Bob")
     key = msg.body
-    channel.send(Message("Bob", "Alice", b"Key received"))
 
     msg = channel.receive("Bob")
     msg.body = decrypt(msg.body, key)
@@ -42,11 +39,13 @@ def bob(channel: Channel) -> None:
 
 
 def mallory(channel: Channel) -> None:
-    # Delete this code and implement eavesdropping and tampering.
-    for _ in range(3):
-        channel.peek()
-        channel.wait()
+    # TO-DO: delete this code and implement eavesdropping and tampering.
+    channel.peek()
+    channel.wait()
+
+    channel.peek()
+    channel.wait()
 
 
 if __name__ == "__main__":
-    start_actors(alice, bob, mallory)
+    Actor.start(Actor(alice), Actor(bob), Actor(mallory, priority=1))

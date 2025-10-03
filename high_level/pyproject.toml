@@ -32,6 +32,7 @@ ignore = [
     "BLE001",   # blind-except
     "D203",     # one-blank-line-before-class
     "D212",     # multi-line-summary-first-line
+    "E741",     # ambiguous-variable-name
     "PD",       # pandas
     "PLC0414",  # useless-import-alias
     "PLR09",    # too-many-*

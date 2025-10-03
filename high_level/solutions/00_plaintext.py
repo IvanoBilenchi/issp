@@ -6,10 +6,11 @@
 # 2. Tamper with the message sent by Alice to Bob.
 #
 # Hints:
-# - Use the `peek` method of the channel to eavesdrop on messages before they are delivered.
+# - Have a look at the documentation of the `Channel` class,
+#   especially the `receive`, `send`, and `peek` methods.
 
 
-from issp import Channel, Message, start_actors
+from issp import Actor, Channel, Message
 
 
 def alice(channel: Channel) -> None:
@@ -22,10 +23,14 @@ def bob(channel: Channel) -> None:
 
 
 def mallory(channel: Channel) -> None:
-    msg = channel.peek()
+    msg = channel.receive()
     msg.body = b"Screw you, Bob!"
     channel.send(msg)
 
 
+def main() -> None:
+    Actor.start(Actor(alice), Actor(bob), Actor(mallory, priority=1))
+
+
 if __name__ == "__main__":
-    start_actors(alice, bob, mallory)
+    main()

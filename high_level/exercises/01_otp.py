@@ -3,28 +3,22 @@
 #
 # Implement the OTP encryption and decryption functions, and use them
 # to ensure the confidentiality of messages exchanged between Alice and Bob.
-#
-# Hints:
-# - Assume that the shared key is held in the global variable KEY,
-#   and that it is not available to Mallory.
 
 import os
 
-from issp import Channel, Message, log, start_actors
-
-KEY = os.urandom(16)  # Shared key
+from issp import Actor, Channel, Message, log
 
 
-def alice(channel: Channel) -> None:
+def alice(channel: Channel, key: bytes) -> None:
     msg = Message("Alice", "Bob", b"Hello, Bob!")
     log.info("[Alice] Encrypted: %s", msg)
-    # Encrypt the message body here.
+    # TO-DO: encrypt the message body.
     channel.send(msg)
 
 
-def bob(channel: Channel) -> None:
+def bob(channel: Channel, key: bytes) -> None:
     msg = channel.receive("Bob")
-    # Decrypt the message body here.
+    # TO-DO: decrypt the message body.
     log.info("[Bob] Decrypted: %s", msg)
 
 
@@ -32,5 +26,10 @@ def mallory(channel: Channel) -> None:
     channel.peek()
 
 
+def main() -> None:
+    key = os.urandom(16)
+    Actor.start(Actor(alice, data=(key,)), Actor(bob, data=(key,)), Actor(mallory, priority=1))
+
+
 if __name__ == "__main__":
-    start_actors(alice, bob, mallory)
+    main()

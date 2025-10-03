@@ -11,9 +11,8 @@
 
 import os
 
-from issp import Channel, Message, aes256_decrypt_block, aes256_encrypt_block, log, start_actors
+from issp import Actor, Channel, Message, aes256_decrypt_block, aes256_encrypt_block, log
 
-KEY = os.urandom(32)  # AES256 shared key
 BLOCK_SIZE = 16  # AES256 block size in bytes
 
 
@@ -43,16 +42,16 @@ def decrypt(data: bytes, key: bytes) -> bytes:
     return bytes(array)
 
 
-def alice(channel: Channel) -> None:
+def alice(channel: Channel, key: bytes) -> None:
     msg = Message("Alice", "Bob", b"Here is the top-secret PIN, keep it safe: 42")
     log.info("[Alice] Encrypted: %s", msg)
-    msg.body = encrypt(zero_pad(msg.body, BLOCK_SIZE), KEY)
+    msg.body = encrypt(zero_pad(msg.body, BLOCK_SIZE), key)
     channel.send(msg)
 
 
-def bob(channel: Channel) -> None:
+def bob(channel: Channel, key: bytes) -> None:
     msg = channel.receive("Bob")
-    msg.body = zero_unpad(decrypt(msg.body, KEY))
+    msg.body = zero_unpad(decrypt(msg.body, key))
     log.info("[Bob] Decrypted: %s", msg)
 
 
@@ -60,5 +59,10 @@ def mallory(channel: Channel) -> None:
     channel.peek()
 
 
+def main() -> None:
+    key = os.urandom(32)
+    Actor.start(Actor(alice, data=(key,)), Actor(bob, data=(key,)), Actor(mallory, priority=1))
+
+
 if __name__ == "__main__":
-    start_actors(alice, bob, mallory)
+    main()

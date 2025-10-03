@@ -1,44 +1,45 @@
 """Exported symbols."""
 
 from . import _log as log
-from ._communication import (
+from ._comm import (
     Actor,
     Channel,
-    LoggingLayer,
     Message,
-    PhysicalLayer,
-    start_actors,
+    Plaintext,
+    Stack,
 )
-from ._encryption import (
+from ._crypto import (
     AES256,
+    CBC,
+    CTR,
+    ECB,
     OTP,
     ChaCha20,
-    Cipher,
-    EncryptionLayer,
     aes256_decrypt_block,
     aes256_encrypt_block,
 )
-from ._padding import pkcs7_pad, pkcs7_unpad, zero_pad, zero_unpad
-from ._util import byte_size, xor
+from ._pad import pkcs7_pad, pkcs7_unpad, zero_pad, zero_unpad
+from ._util import blocks, byte_size, xor
 
 __all__ = [
     "AES256",
+    "CBC",
+    "CTR",
+    "ECB",
     "OTP",
     "Actor",
     "ChaCha20",
     "Channel",
-    "Cipher",
-    "EncryptionLayer",
-    "LoggingLayer",
     "Message",
-    "PhysicalLayer",
+    "Plaintext",
+    "Stack",
     "aes256_decrypt_block",
     "aes256_encrypt_block",
+    "blocks",
     "byte_size",
     "log",
     "pkcs7_pad",
     "pkcs7_unpad",
-    "start_actors",
     "xor",
     "zero_pad",
     "zero_unpad",

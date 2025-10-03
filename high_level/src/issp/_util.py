@@ -1,13 +1,17 @@
-def xor(a: bytes, b: bytes) -> bytes:
-    a_size, b_size = len(a), len(b)
-    if a_size > b_size:
-        err_msg = f"RHS ({b_size} B) is too short for LHS ({a_size} B)"
-        raise ValueError(err_msg)
-    return bytes(a[i] ^ b[i] for i in range(a_size))
+from collections.abc import Iterable
+
+
+def xor(a: Iterable[int], b: Iterable[int]) -> bytes:
+    return bytes(a_byte ^ b_byte for (a_byte, b_byte) in zip(a, b, strict=False))
 
 
 def byte_size(number: int) -> int:
     return (number.bit_length() + 7) // 8
+
+
+def blocks(data: bytes, block_size: int) -> Iterable[bytes]:
+    for i in range(0, len(data), block_size):
+        yield data[i : i + block_size]
 
 
 def snake_to_camel(s: str) -> str:
