@@ -1,14 +1,12 @@
 from __future__ import annotations
 
 import base64
-import heapq
 import itertools
 import json
 import sys
 import threading
 import time
 from collections.abc import Callable
-from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 from . import _log as log
@@ -58,10 +56,25 @@ class Message:
         return f"Message(from={self.sender!r}, to={self.recipient!r}, body={body!r})"
 
 
-@dataclass(order=True)
 class Event:
-    priority: int
-    event: threading.Event = field(compare=False)
+    def __init__(self, priority: int, token: str | None = None) -> None:
+        self.priority = priority
+        self.token = token
+        self._event = threading.Event()
+
+    def wait(self) -> None:
+        self._event.wait()
+
+    def set(self) -> None:
+        self._event.set()
+
+    def token_aware_priority(self, token: str | None) -> float:
+        pri = self.priority * 3
+        if self.token is None:
+            pri += 2
+        elif token and self.token == token:
+            pri += 1
+        return pri
 
 
 class EventQueue:
@@ -74,18 +87,27 @@ class EventQueue:
     def __bool__(self) -> bool:
         return len(self) > 0
 
-    def enqueue(self, priority: int = 0) -> None:
-        event = threading.Event()
-        heapq.heappush(self._queue, Event(-priority, event))
+    def _next(self, token: str | None) -> tuple[int, Event]:
+        return max(
+            enumerate(self._queue),
+            key=lambda e: e[1].token_aware_priority(token),
+        )
+
+    def enqueue(self, priority: int = 0, token: str | None = None) -> None:
+        event = Event(priority, token)
+        self._queue.append(event)
         event.wait()
 
-    def dequeue(self) -> None:
-        if self._queue:
-            heapq.heappop(self._queue).event.set()
+    def dequeue(self, token: str | None = None) -> None:
+        if not self._queue:
+            return
+        i, event = self._next(token)
+        del self._queue[i]
+        event.set()
 
     def dequeue_all(self) -> None:
         while self._queue:
-            heapq.heappop(self._queue).event.set()
+            self.dequeue()
 
 
 class AccessQueue:
@@ -94,30 +116,25 @@ class AccessQueue:
         self._send_queue = EventQueue()
         self._rcv_queue = EventQueue()
         self._wait_queue = EventQueue()
+        self._recipient: str | None = None
         threading.Thread(target=self._tick, daemon=True).start()
 
     def _tick(self) -> None:
         for i in itertools.count(start=1):
             time.sleep(self._interval)
             log.debug("[Queue] Slot %d", i)
-            should_wait_again = len(self._send_queue) > 0
-            self._send_queue.dequeue()
-            if should_wait_again:
+            if len(self._send_queue):
+                self._send_queue.dequeue()
                 time.sleep(self._interval)
-            self._rcv_queue.dequeue()
+            self._rcv_queue.dequeue(self._recipient)
             self._wait_queue.dequeue_all()
 
-    def request_send(self, priority: int = 0) -> None:
+    def request_send(self, recipient: str, priority: int = 0) -> None:
         self._send_queue.enqueue(priority)
+        self._recipient = recipient
 
-    def give_up_send(self) -> None:
-        self._send_queue.dequeue()
-
-    def request_receive(self, priority: int = 0) -> None:
-        self._rcv_queue.enqueue(priority)
-
-    def give_up_receive(self) -> None:
-        self._rcv_queue.dequeue()
+    def request_receive(self, priority: int = 0, recipient: str | None = None) -> None:
+        self._rcv_queue.enqueue(priority, recipient)
 
     def wait(self, turns: int = 1) -> None:
         for _ in range(turns):
@@ -130,18 +147,15 @@ class Channel:
         self._access_queue = access_queue
 
     def send(self, msg: Message, *, priority: int = 0) -> None:
-        self._access_queue.request_send(priority=priority)
+        self._access_queue.request_send(msg.recipient, priority=priority)
         self.stack.write(msg)
 
     def receive(self, recipient: str, *, priority: int = 0) -> Message:
-        self._access_queue.request_receive(priority=priority)
-        if (msg := self.stack[-1].read()) and msg.recipient == recipient:
-            return self.stack.read()
-        self._access_queue.give_up_receive()
-        return self.receive(recipient, priority=priority)
+        self._access_queue.request_receive(priority=priority, recipient=recipient)
+        return self.stack.read()
 
-    def peek(self) -> Message:
-        self._access_queue.request_receive(priority=sys.maxsize)
+    def peek(self, priority: int = 0) -> Message:
+        self._access_queue.request_receive(priority=priority)
         return self.stack.read()
 
     def wait(self, turns: int = 1) -> None:
