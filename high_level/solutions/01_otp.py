@@ -22,7 +22,7 @@ def decrypt(data: bytes, key: bytes) -> bytes:
 
 
 def alice(channel: Channel, key: bytes) -> None:
-    msg = Message("Alice", "Bob", b"Hello, Bob!")
+    msg = Message("Alice", "Bob", "Hello, Bob!")
     log.info("[Alice] Encrypted: %s", msg)
     msg.body = encrypt(msg.body, key)
     channel.send(msg)

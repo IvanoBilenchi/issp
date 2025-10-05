@@ -72,6 +72,20 @@ class Message:
         """
         return not (self.sender or self.recipient or self.body)
 
+    @property
+    def body(self) -> bytes:
+        """The body of the message, represented as bytes."""
+        return self._body
+
+    @body.setter
+    def body(self, value: Body) -> None:
+        """
+        Set the body of the message.
+
+        :param value: The new body of the message.
+        """
+        self._body = self.encode_body(value)
+
     def __init__(self, sender: str, recipient: str, body: Body) -> None:
         """
         Initialize a message.
@@ -84,8 +98,7 @@ class Message:
         """The sender of the message."""
         self.recipient = recipient
         """The recipient of the message."""
-        self.body = self.encode_body(body)
-        """The body of the message, represented as bytes."""
+        self.body = body
 
     def __repr__(self) -> str:
         body = self.decode_body(self.body)
@@ -105,8 +118,6 @@ class Channel:
     """
     A shared communication channel that provides synchronized access to an underlying medium.
 
-    :ivar stack: The security stack applied to messages sent and received through this channel.
-
     .. note::
         This class manages message transmission and reception between entities by synchronizing
         access to the underlying medium through a queue-based system. For each time interval,
@@ -120,6 +131,11 @@ class Channel:
         messages are not received.
     """
 
+    @property
+    def stack(self) -> Stack:
+        """The security stack applied to messages sent and received through this channel."""
+        return self._stack
+
     def __init__(
         self,
         name: str,
@@ -127,7 +143,7 @@ class Channel:
         stack: Layer,
         priority: int = 0,
     ) -> None:
-        self.stack = Stack(stack)
+        self._stack = Stack(stack)
         self._medium = medium
         self._name = name
         self._priority = priority
@@ -150,11 +166,11 @@ class Channel:
                          If None, an instance-specific default priority is used.
         :param timeout: The maximum time to wait for a message, in seconds.
         """
-        enc_msg = self.stack.encode(msg.copy())
         try:
+            enc_msg = self.stack.encode(msg.copy())
             self._medium.write(enc_msg, self._get_priority(priority), timeout=timeout)
-        except TimeoutError:
-            log.info("[%s] Send timed out after %g seconds.", self._name, timeout)
+        except Exception as e:
+            log.warning("[%s] %s", self._name, e)
             return
         log.info("[%s] Sent: %s", self._name, msg)
 
@@ -180,10 +196,10 @@ class Channel:
         """
         try:
             msg = self._medium.read(recipient, self._get_priority(priority), timeout=timeout)
-        except TimeoutError:
-            log.info("[%s] Receive timed out after %g seconds.", self._name, timeout)
+            msg = self.stack.decode(msg)
+        except Exception as e:
+            log.warning("[%s] %s", self._name, e)
             return Message.empty()
-        msg = self.stack.decode(msg)
         log.info("[%s] Received: %s", self._name, msg)
         return msg
 
@@ -196,13 +212,13 @@ class Channel:
         :param timeout: The maximum time to wait for a message, in seconds.
         :return: The peeked message.
         """
-        priority = self._get_priority(priority)
         try:
+            priority = self._get_priority(priority)
             msg = self._medium.read(Event.PEEK_TOKEN, priority, clear=False, timeout=timeout)
-        except TimeoutError:
-            log.info("[%s] Peek timed out after %g seconds.", self._name, timeout)
+            msg = self.stack.decode(msg)
+        except Exception as e:
+            log.warning("[%s] %s", self._name, e)
             return Message.empty()
-        msg = self.stack.decode(msg)
         log.info("[%s] Peeked: %s", self._name, msg)
         return msg
 

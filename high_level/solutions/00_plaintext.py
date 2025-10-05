@@ -24,7 +24,7 @@ def bob(channel: Channel) -> None:
 
 def mallory(channel: Channel) -> None:
     msg = channel.receive()
-    msg.body = b"Screw you, Bob!"
+    msg.body = "Screw you, Bob!"
     channel.send(msg)
 
 

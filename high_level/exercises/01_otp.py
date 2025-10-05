@@ -10,15 +10,15 @@ from issp import Actor, Channel, Message, log
 
 
 def alice(channel: Channel, key: bytes) -> None:
-    msg = Message("Alice", "Bob", b"Hello, Bob!")
+    msg = Message("Alice", "Bob", "Hello, Bob!")
     log.info("[Alice] Encrypted: %s", msg)
-    # TO-DO: encrypt the message body.
+    # TO-DO: Encrypt the message body.
     channel.send(msg)
 
 
 def bob(channel: Channel, key: bytes) -> None:
     msg = channel.receive("Bob")
-    # TO-DO: decrypt the message body.
+    # TO-DO: Decrypt the message body.
     log.info("[Bob] Decrypted: %s", msg)
 
 

@@ -1,6 +1,6 @@
 # Alice and Bob want to exchange messages over an insecure channel. They decide to do so
 # using the One-Time Pad (OTP) encryption algorithm. However, they do not share a secret key,
-# so they must first exchange it over an insecure channel. Mallory is listening.
+# so they must first exchange it. Mallory is listening.
 #
 # Allow Mallory to:
 # 1. Eavesdrop on the communication between Alice and Bob.
@@ -23,7 +23,7 @@ def alice(channel: Channel) -> None:
     key = os.urandom(16)
     channel.send(Message("Alice", "Bob", key))
 
-    msg = Message("Alice", "Bob", b"Hello, Bob!")
+    msg = Message("Alice", "Bob", "Hello, Bob!")
     log.info("[Alice] Encrypted: %s", msg)
     msg.body = encrypt(msg.body, key)
     channel.send(msg)
@@ -39,7 +39,7 @@ def bob(channel: Channel) -> None:
 
 
 def mallory(channel: Channel) -> None:
-    # TO-DO: delete this code and implement eavesdropping and tampering.
+    # TO-DO: Delete this code and implement eavesdropping and tampering.
     channel.peek()
     channel.wait()
 

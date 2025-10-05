@@ -23,7 +23,7 @@ def decrypt(data: bytes, key: bytes, iv: bytes) -> bytes:
 
 
 def alice(channel: Channel, key: bytes) -> None:
-    msg = Message("Alice", "Bob", b"Here is the top-secret PIN, keep it safe: 42")
+    msg = Message("Alice", "Bob", "Here is the top-secret PIN, keep it safe: 42")
     log.info("[Alice] Encrypted: %s", msg)
     # TO-DO: Generate a random IV, encrypt the message body, and prepend the IV to the ciphertext.
     channel.send(msg)

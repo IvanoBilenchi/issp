@@ -23,7 +23,7 @@ def bob(channel: Channel) -> None:
 
 
 def mallory(channel: Channel) -> None:
-    # TO-DO: implement eavesdropping and tampering.
+    # TO-DO: Implement eavesdropping and tampering.
     pass
 
 

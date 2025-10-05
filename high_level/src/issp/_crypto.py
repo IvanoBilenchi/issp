@@ -164,19 +164,19 @@ class CBC(BlockCipherMode):
 
     def encrypt(self, data: bytes, *, iv: bytes = b"") -> bytes:
         array = bytearray()
-        prev_block = iv
+        last = iv
         for block in blocks(pkcs7_pad(data, self.block_size), self.block_size):
-            enc_block = self._cipher.encrypt(xor(prev_block, block))
+            enc_block = self._cipher.encrypt(xor(last, block))
             array.extend(enc_block)
-            prev_block = enc_block
+            last = enc_block
         return bytes(array)
 
     def decrypt(self, data: bytes, *, iv: bytes = b"") -> bytes:
         array = bytearray()
-        prev_block = iv
+        last = iv
         for block in blocks(data, self.block_size):
-            array.extend(xor(prev_block, self._cipher.decrypt(block)))
-            prev_block = block
+            array.extend(xor(last, self._cipher.decrypt(block)))
+            last = block
         return pkcs7_unpad(array, self.block_size)
 
 

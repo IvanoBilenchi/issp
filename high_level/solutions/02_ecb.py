@@ -43,7 +43,7 @@ def decrypt(data: bytes, key: bytes) -> bytes:
 
 
 def alice(channel: Channel, key: bytes) -> None:
-    msg = Message("Alice", "Bob", b"Here is the top-secret PIN, keep it safe: 42")
+    msg = Message("Alice", "Bob", "Here is the top-secret PIN, keep it safe: 42")
     log.info("[Alice] Encrypted: %s", msg)
     msg.body = encrypt(zero_pad(msg.body, BLOCK_SIZE), key)
     channel.send(msg)
