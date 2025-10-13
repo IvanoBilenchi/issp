@@ -117,8 +117,8 @@ class HMAC(Verifier):
             value = zero_pad(value, self._hash.block_size)
         self._key = value
 
-    def __init__(self, hash_fn: Hash, key: bytes | None = None) -> None:
-        self._hash = hash_fn
+    def __init__(self, hash_fn: Hash | None = None, key: bytes | None = None) -> None:
+        self._hash = hash_fn or SHA256()
         self._o_pad_val = b"\x5c" * self._hash.block_size
         self._i_pad_val = b"\x36" * self._hash.block_size
         self.key = key or os.urandom(self._hash.block_size)
@@ -131,11 +131,18 @@ class HMAC(Verifier):
 
 
 class Signature(Verifier):
-    """Digital signature verifier."""
+    """Signature verifier."""
 
-    def __init__(self, hash_fn: Hash, cipher: Cipher) -> None:
-        self._hash = hash_fn
+    @cached_property
+    def code_size(self) -> int:
+        try:
+            return super().code_size
+        except Exception:
+            return self._cipher.ciphertext_size(self._hash.code_size)
+
+    def __init__(self, cipher: Cipher, hash_fn: Hash | None = None) -> None:
         self._cipher = cipher
+        self._hash = hash_fn or SHA256()
         super().__init__()
 
     def compute_code(self, data: bytes) -> bytes:

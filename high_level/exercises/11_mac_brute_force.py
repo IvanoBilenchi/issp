@@ -11,7 +11,7 @@
 # - Assume that Mallory knows that the key is a 4-digit PIN.
 
 
-from issp import HMAC, SHA256, Actor, Channel, Message, log
+from issp import HMAC, Actor, Channel, Message, log
 
 
 def alice(channel: Channel) -> None:
@@ -38,7 +38,7 @@ def mallory(channel: Channel) -> None:
 def main() -> None:
     key = b"1234"
     log.info("Key: %s", key)
-    alice_bob = HMAC(SHA256(), key)
+    alice_bob = HMAC(key=key)
     Actor.start(
         Actor(alice, stacks=(alice_bob,)),
         Actor(bob, stacks=(alice_bob,)),

@@ -45,3 +45,21 @@ def pkcs7_unpad(data: bytes, size: int) -> bytes:
     """
     unpadder = padding.PKCS7(size * 8).unpadder()
     return unpadder.update(data) + unpadder.finalize()
+
+
+def pkcs1v15_unpad(data: bytes) -> bytes:
+    """
+    Remove PKCS#1 v1.5 padding from data.
+
+    :param data: Padded data.
+    :return: Unpadded data.
+    """
+    if len(data) < 11 or data[0] != 0x00 or data[1] != 0x02:  # noqa: PLR2004
+        err_msg = "Invalid padding"
+        raise ValueError(err_msg)
+    try:
+        sep_index = data.index(0x00, 2)
+    except ValueError:
+        err_msg = "Invalid padding"
+        raise ValueError(err_msg) from None
+    return data[sep_index + 1 :]
