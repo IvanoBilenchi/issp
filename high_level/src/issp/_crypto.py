@@ -13,7 +13,7 @@ from cryptography.hazmat.primitives.ciphers import algorithms, modes
 
 from ._comm import Layer, Message
 from ._pad import pkcs1v15_unpad, pkcs7_pad, pkcs7_unpad
-from ._util import blocks, xor
+from ._util import blocks, split, xor
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -65,22 +65,18 @@ class Cipher(Layer):
         iv = b"x\00" * self.iv_size if self.iv_size else b""
         return len(self.encrypt(plaintext, iv=iv))
 
+    def generate_iv(self) -> bytes:
+        """Generate a random initialization vector (IV)."""
+        return os.urandom(self.iv_size) if self.iv_size else b""
+
     def encode(self, msg: Message) -> Message:
-        iv = os.urandom(self.iv_size) if self.iv_size else b""
-        data = self.encrypt(msg.body, iv=iv)
-        if iv:
-            data = iv + data
-        msg.body = data
+        iv = self.generate_iv()
+        msg.body = iv + self.encrypt(msg.body, iv=iv)
         return msg
 
     def decode(self, msg: Message) -> Message:
-        if self.iv_size:
-            iv = msg.body[: self.iv_size]
-            data = msg.body[self.iv_size :]
-        else:
-            iv = b""
-            data = msg.body
-        msg.body = self.decrypt(data, iv=iv)
+        iv, body = split(msg.body, self.iv_size)
+        msg.body = self.decrypt(body, iv=iv)
         return msg
 
 
@@ -99,10 +95,6 @@ class SymmetricCipher(Cipher):
     def generate_key(self) -> bytes:
         """Generate a random symmetric key."""
         return os.urandom(self.key_size)
-
-    def generate_iv(self) -> bytes:
-        """Generate a random initialization vector (IV)."""
-        return os.urandom(self.iv_size) if self.iv_size else b""
 
 
 class BaseSymmetricCipher(SymmetricCipher):
@@ -157,7 +149,7 @@ class StreamCipher(SymmetricCipher):
         return xor(data, self.key_stream(iv))
 
 
-class BlockCipherMode(BlockCipher):
+class BlockCipherMode(Cipher):
     """Base class for block cipher modes of operation."""
 
     @property
@@ -212,9 +204,8 @@ class CBC(BlockCipherMode):
         array = bytearray()
         last = iv
         for block in blocks(pkcs7_pad(data, self.block_size), self.block_size):
-            enc_block = self._cipher.encrypt(xor(last, block))
-            array.extend(enc_block)
-            last = enc_block
+            last = self._cipher.encrypt(xor(last, block))
+            array.extend(last)
         return bytes(array)
 
     def decrypt(self, data: bytes, *, iv: bytes = b"") -> bytes:
@@ -432,7 +423,7 @@ class RSAPrivateKey(RSAKey):
 
     @staticmethod
     def _pub_swap_exp(key: rsa.RSAPrivateKey) -> rsa.RSAPublicKey:
-        # Returns a RSAPPublicKey by swapping the public exponent e with the private exponent d.
+        # Returns a RSAPublicKey by swapping the public exponent e with the private exponent d.
         # This hack is needed to "encrypt" with the private key when in sign_mode.
         n = key.private_numbers()
         return rsa.RSAPublicNumbers(n.d, n.public_numbers.n).public_key()
@@ -496,12 +487,10 @@ class Envelope(Cipher):
         return self._asym.encrypt(key + iv) + self._sym.encrypt(data, iv=iv)
 
     def decrypt(self, data: bytes, *, iv: bytes = b"") -> bytes:
-        key_iv = self._asym.decrypt(data[: self._asym.key_size])
-        ciphertext = data[self._asym.key_size :]
-        key = key_iv[: self._sym.key_size]
-        iv = key_iv[self._sym.key_size :]
+        enc_key, enc_msg = split(data, self._asym.key_size)
+        key, iv = split(self._asym.decrypt(enc_key), self._sym.key_size)
         self._sym.key = key
-        return self._sym.decrypt(ciphertext, iv=iv)
+        return self._sym.decrypt(enc_msg, iv=iv)
 
 
 def aes256_encrypt_block(block: bytes, key: bytes) -> bytes:

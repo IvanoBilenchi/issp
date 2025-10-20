@@ -5,7 +5,7 @@ from ._comm import Layer, Message
 from ._crypto import BlockCipher, Cipher
 from ._hash import sha1, sha256
 from ._pad import pkcs7_pad, zero_pad
-from ._util import blocks, xor
+from ._util import blocks, split, xor
 
 
 class Verifier(Layer):
@@ -43,8 +43,7 @@ class Verifier(Layer):
         return msg
 
     def decode(self, msg: Message) -> Message:
-        code = msg.body[: self.code_size]
-        msg.body = msg.body[self.code_size :]
+        code, msg.body = split(msg.body, self.code_size)
         if not self.verify(msg.body, code):
             err_msg = "Message verification failed"
             raise ValueError(err_msg)
@@ -146,10 +145,9 @@ class Signature(Verifier):
         super().__init__()
 
     def compute_code(self, data: bytes) -> bytes:
-        iv = os.urandom(self._cipher.iv_size) if self._cipher.iv_size else b""
+        iv = self._cipher.generate_iv()
         return iv + self._cipher.encrypt(self._hash.compute_code(data), iv=iv)
 
     def verify(self, data: bytes, code: bytes) -> bool:
-        iv = code[: self._cipher.iv_size] if self._cipher.iv_size else b""
-        digest = self._cipher.decrypt(code[self._cipher.iv_size :], iv=iv)
-        return self._hash.compute_code(data) == digest
+        iv, signature = split(code, self._cipher.iv_size)
+        return self._hash.compute_code(data) == self._cipher.decrypt(signature, iv=iv)

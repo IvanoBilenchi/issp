@@ -342,7 +342,7 @@ class Actor:
             for t in threads:
                 t.join()
         except KeyboardInterrupt:
-            print("Interrupted by user, exiting.")
+            log.info("Interrupted by user, exiting.")
 
     def __init__(
         self,

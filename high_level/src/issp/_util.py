@@ -1,5 +1,6 @@
 import itertools
-from collections.abc import Iterable
+import sys
+from collections.abc import Iterable, Sequence
 
 
 def xor(a: Iterable[int], b: Iterable[int]) -> bytes:
@@ -17,12 +18,25 @@ def xor(a: Iterable[int], b: Iterable[int]) -> bytes:
 
 def byte_size(number: int) -> int:
     """
-    Return the number of bytes required to represent an integer.
+    Return the number of bytes required to represent an unsigned integer.
 
-    :param number: The integer to evaluate.
-    :return: Number of bytes required to represent the integer.
+    :param number: The unsigned integer to evaluate.
+    :return: Number of bytes required to represent the unsigned integer.
     """
+    if number < 0:
+        err_msg = "Number must be non-negative."
+        raise ValueError(err_msg)
     return (number.bit_length() + 7) // 8
+
+
+def to_bytes(number: int) -> bytes:
+    """
+    Convert an unsigned integer to its byte representation.
+
+    :param number: The unsigned integer to convert.
+    :return: Byte representation of the unsigned integer.
+    """
+    return number.to_bytes(byte_size(number), sys.byteorder)
 
 
 def blocks(data: bytes, block_size: int) -> Iterable[bytes]:
@@ -37,6 +51,25 @@ def blocks(data: bytes, block_size: int) -> Iterable[bytes]:
     """
     for i in range(0, len(data), block_size):
         yield data[i : i + block_size]
+
+
+def split(data: bytes, sizes: int | Sequence[int]) -> Sequence[bytes]:
+    """
+    Split a byte sequence into parts of specified sizes.
+
+    :param data: The byte sequence to split.
+    :param sizes: An iterable of sizes for each part, except the last part.
+    :return: A tuple of byte sequences.
+    """
+    if isinstance(sizes, int):
+        sizes = (sizes,)
+    parts: list[bytes] = []
+    index = 0
+    for size in sizes:
+        parts.append(data[index : index + size])
+        index += size
+    parts.append(data[index:])
+    return parts
 
 
 def generate_bytes(

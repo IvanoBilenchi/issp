@@ -15,7 +15,8 @@ _LOGGER = logging.getLogger("issp")
 
 
 def _setup_logger() -> None:
-    fmt = "[%(asctime)s] [%(name)s] [%(levelname)s] %(message)s"
+    logging.addLevelName(WARNING, "WARN")
+    fmt = "[%(asctime)s] [%(name)s] [%(levelname)-5s] %(message)s"
     datefmt = "%Y-%m-%d %H:%M:%S"
     handler = logging.StreamHandler(sys.stdout)
     handler.setFormatter(logging.Formatter(fmt, datefmt=datefmt))

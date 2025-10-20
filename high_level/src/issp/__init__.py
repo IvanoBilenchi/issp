@@ -39,7 +39,19 @@ from ._hash import (
     sha256,
 )
 from ._pad import pkcs7_pad, pkcs7_unpad, zero_pad, zero_unpad
-from ._util import blocks, byte_size, generate_bytes, xor
+from ._rng import (
+    LCG,
+    RNG,
+    TRNG,
+    ANSIx917,
+    CipherRNG,
+    Fortuna,
+    random_bytes,
+    random_choice,
+    random_int,
+    random_string,
+)
+from ._util import blocks, byte_size, generate_bytes, to_bytes, xor
 from ._verify import CBCMAC, HMAC, SHA1, SHA256, Hash, Signature, Verifier
 
 __all__ = [
@@ -49,10 +61,14 @@ __all__ = [
     "CTR",
     "ECB",
     "HMAC",
+    "LCG",
     "OTP",
+    "RNG",
     "RSA",
     "SHA1",
     "SHA256",
+    "TRNG",
+    "ANSIx917",
     "Actor",
     "AsymmetricCipher",
     "AsymmetricKey",
@@ -61,7 +77,9 @@ __all__ = [
     "ChaCha20",
     "Channel",
     "Cipher",
+    "CipherRNG",
     "Envelope",
+    "Fortuna",
     "Hash",
     "Message",
     "Plaintext",
@@ -83,10 +101,15 @@ __all__ = [
     "log",
     "pkcs7_pad",
     "pkcs7_unpad",
+    "random_bytes",
+    "random_choice",
+    "random_int",
+    "random_string",
     "scrypt",
     "scrypt_fast",
     "sha1",
     "sha256",
+    "to_bytes",
     "xor",
     "zero_pad",
     "zero_unpad",
