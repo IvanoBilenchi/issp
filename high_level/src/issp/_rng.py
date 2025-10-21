@@ -10,40 +10,95 @@ from typing import Any
 from . import _log as log
 from ._crypto import AES256, CTR, BlockCipher, StreamCipher
 from ._hash import sha256
-from ._util import xor
+from ._util import byte_size, xor
 from ._verify import Hash
 
 
 class RNG[SeedType: (int, bytes)]:
-    VALUE_SIZE = 1
+    """Base class for random number generators."""
+
+    @property
+    def value_size(self) -> int:
+        """
+        Get the size of the values produced by the RNG in bytes.
+
+        :return: The size of the values in bytes.
+        """
+        return getattr(self.__class__, "VALUE_SIZE", 1)
 
     def __next__(self) -> int:
+        """
+        Return the next random value.
+
+        :return: The next random value.
+        """
         raise NotImplementedError
 
     def set_seed(self, seed: SeedType) -> None:
+        """
+        Set the seed for the RNG.
+
+        :param seed: The seed value.
+        """
         raise NotImplementedError
 
     def __iter__(self) -> Iterator[int]:
         return self
 
-    def byte_stream(self, size: int) -> Iterator[int]:
-        if self.VALUE_SIZE == 1:
-            return itertools.islice(self, size)
-        while size >= self.VALUE_SIZE:
-            yield from next(self).to_bytes(self.VALUE_SIZE)
-            size -= self.VALUE_SIZE
+    def byte_stream(self, size: int | None = None) -> Iterator[int]:
+        """
+        Generate a stream of random bytes.
+
+        :param size: The number of bytes to generate. If None, generates an infinite stream.
+        :return: An iterator of random bytes.
+        """
+        if size is not None and size <= 0:
+            return
+
+        if self.value_size == 1:
+            if size is None:
+                yield from self
+            else:
+                yield from itertools.islice(self, size)
+            return
+
+        if size is None:
+            while True:
+                yield from next(self).to_bytes(self.value_size)
+
+        while size >= self.value_size:
+            yield from next(self).to_bytes(self.value_size)
+            size -= self.value_size
+
         if size > 0:
-            yield from next(self).to_bytes(self.VALUE_SIZE)[:size]
+            yield from next(self).to_bytes(self.value_size)[:size]
 
     def bytes(self, size: int) -> bytes:
+        """
+        Generate random bytes.
+
+        :param size: The number of bytes to generate.
+        :return: A bytes object containing random bytes.
+        """
         return bytes(self.byte_stream(size))
 
-    def number(self, size: int = VALUE_SIZE) -> int:
-        return next(self) if size == self.VALUE_SIZE else int.from_bytes(self.byte_stream(size))
+    def number(self, size: int | None = None) -> int:
+        """
+        Generate a random integer of the specified byte size.
+
+        :param size: The byte size of the integer. If None, uses the RNG's value size.
+        :return: A random integer.
+        """
+        size = size or self.value_size
+        return next(self) if size == self.value_size else int.from_bytes(self.byte_stream(size))
 
 
 class LCG(RNG[int]):
-    VALUE_SIZE = 4
+    """Linear Congruential Generator RNG."""
+
+    @property
+    def value_size(self) -> int:
+        return byte_size(self._m)
 
     def __init__(self, a: int = 16807, c: int = 0, m: int = 2**31 - 1) -> None:
         self._state = time.time_ns() % m
@@ -60,6 +115,8 @@ class LCG(RNG[int]):
 
 
 class CipherRNG(RNG[bytes]):
+    """RNG based on a stream cipher."""
+
     def __init__(self, cipher: StreamCipher) -> None:
         self._cipher = cipher
         self._key_stream: Iterator[int] = iter(b"")
@@ -75,6 +132,8 @@ class CipherRNG(RNG[bytes]):
 
 
 class HashRNG(RNG[bytes]):
+    """RNG based on a hash function."""
+
     def __init__(self, hash_fn: Hash) -> None:
         self._hash = hash_fn
         self._stream = self._new_stream(int.from_bytes(os.urandom(hash_fn.code_size)))
@@ -92,6 +151,8 @@ class HashRNG(RNG[bytes]):
 
 
 class ANSIx917(RNG[bytes]):
+    """ANSI X9.17 RNG."""
+
     VALUE_SIZE = 8
 
     def __init__(self, cipher: BlockCipher | None = None) -> None:
@@ -102,27 +163,34 @@ class ANSIx917(RNG[bytes]):
         temp = self._cipher.encrypt(time.time_ns().to_bytes(self._cipher.block_size))
         output = self._cipher.encrypt(xor(self._state, temp))
         self._state = self._cipher.encrypt(xor(output, temp))
-        return int.from_bytes(output[: self.VALUE_SIZE])
+        return int.from_bytes(output[: self.value_size])
 
     def set_seed(self, seed: bytes) -> None:
         self._cipher.key = seed
 
 
 class TRNG(RNG[bytes]):
+    """True Random Number Generator."""
+
+    @staticmethod
+    def _urandom_stream() -> Iterator[int]:
+        while True:
+            yield from os.urandom(1024)
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._stream = self._urandom_stream()
+
     def __next__(self) -> int:
-        return os.urandom(1)[0]
+        return next(self._stream)
 
     def set_seed(self, seed: bytes) -> None:
         del seed  # Unused
 
-    def bytes(self, size: int) -> bytes:
-        return os.urandom(size)
-
-    def byte_stream(self, size: int) -> Iterator[int]:
-        yield from self.bytes(size)
-
 
 class Fortuna(CipherRNG):
+    """Fortuna RNG."""
+
     def __init__(
         self,
         sources: Iterable[RNG[Any]],
@@ -173,16 +241,42 @@ class Fortuna(CipherRNG):
 
 
 def random_bytes(size: int) -> bytes:
+    """
+    Generate random bytes using the system's secure random number generator.
+
+    :param size: The number of random bytes to generate.
+    :return: A bytes object containing random bytes.
+    """
     return secrets.token_bytes(size)
 
 
 def random_string(length: int, charset: str = string.printable) -> str:
+    """
+    Generate a random string of the specified length using the given character set.
+
+    :param length: The length of the random string.
+    :param charset: The character set to use for generating the string.
+    :return: A random string.
+    """
     return "".join(secrets.choice(charset) for _ in range(length))
 
 
 def random_int(min_value: int = 0, max_value: int = 2**32 - 1) -> int:
+    """
+    Generate a random integer within the specified range.
+
+    :param min_value: The minimum value (inclusive).
+    :param max_value: The maximum value (inclusive).
+    :return: A random integer within the specified range.
+    """
     return secrets.randbelow(max_value - min_value + 1) + min_value
 
 
 def random_choice[T](sequence: Sequence[T]) -> T:
+    """
+    Select a random element from the given sequence.
+
+    :param sequence: The sequence to choose from.
+    :return: A randomly selected element from the sequence.
+    """
     return secrets.choice(sequence)
