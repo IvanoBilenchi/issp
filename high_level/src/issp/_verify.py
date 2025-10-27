@@ -1,11 +1,11 @@
 import os
 from functools import cached_property
 
+from ._bytes import blocks, split, xor
 from ._comm import Layer, Message
 from ._crypto import BlockCipher, Cipher
 from ._hash import sha1, sha256
 from ._pad import pkcs7_pad, zero_pad
-from ._util import blocks, split, xor
 
 
 class Verifier(Layer):

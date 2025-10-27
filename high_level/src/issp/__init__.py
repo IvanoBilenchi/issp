@@ -1,6 +1,7 @@
 """Exported symbols."""
 
 from . import _log as log
+from ._bytes import blocks, byte_size, generate_bytes, to_bytes, xor
 from ._comm import (
     Actor,
     Channel,
@@ -31,17 +32,18 @@ from ._crypto import (
     aes256_encrypt_block,
 )
 from ._hash import (
-    hmac_sha1,
-    hmac_sha256,
     scrypt,
     scrypt_fast,
     sha1,
     sha256,
 )
 from ._pad import pkcs7_pad, pkcs7_unpad, zero_pad, zero_unpad
+from ._pass import common_passwords, generate_password_database, random_common_password
 from ._rng import (
+    HOTP,
     LCG,
     RNG,
+    TOTP,
     TRNG,
     ANSIx917,
     CipherRNG,
@@ -51,7 +53,8 @@ from ._rng import (
     random_int,
     random_string,
 )
-from ._util import blocks, byte_size, generate_bytes, to_bytes, xor
+from ._server import BankServer, Server
+from ._util import run_main
 from ._verify import CBCMAC, HMAC, SHA1, SHA256, Hash, Signature, Verifier
 
 __all__ = [
@@ -61,17 +64,20 @@ __all__ = [
     "CTR",
     "ECB",
     "HMAC",
+    "HOTP",
     "LCG",
     "OTP",
     "RNG",
     "RSA",
     "SHA1",
     "SHA256",
+    "TOTP",
     "TRNG",
     "ANSIx917",
     "Actor",
     "AsymmetricCipher",
     "AsymmetricKey",
+    "BankServer",
     "BlockCipher",
     "BlockCipherMode",
     "ChaCha20",
@@ -86,6 +92,7 @@ __all__ = [
     "RSAKey",
     "RSAPrivateKey",
     "RSAPublicKey",
+    "Server",
     "Signature",
     "Stack",
     "StreamCipher",
@@ -95,16 +102,18 @@ __all__ = [
     "aes256_encrypt_block",
     "blocks",
     "byte_size",
+    "common_passwords",
     "generate_bytes",
-    "hmac_sha1",
-    "hmac_sha256",
+    "generate_password_database",
     "log",
     "pkcs7_pad",
     "pkcs7_unpad",
     "random_bytes",
     "random_choice",
+    "random_common_password",
     "random_int",
     "random_string",
+    "run_main",
     "scrypt",
     "scrypt_fast",
     "sha1",

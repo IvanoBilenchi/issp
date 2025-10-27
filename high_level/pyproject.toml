@@ -21,6 +21,11 @@ Homepage = "https://github.com/IvanoBilenchi/issp"
 requires = ["setuptools>=61.0.0"]
 build-backend = "setuptools.build_meta"
 
+[tool.pyright]
+include = ["src/**", "exercises/**", "solutions/**"]
+typeCheckingMode = "strict"
+disableBytesTypePromotions = false
+
 [tool.ruff]
 line-length = 100
 

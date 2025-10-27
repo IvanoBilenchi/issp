@@ -8,10 +8,10 @@ from collections.abc import Iterable, Iterator, Sequence
 from typing import Any
 
 from . import _log as log
+from ._bytes import byte_size, xor
 from ._crypto import AES256, CTR, BlockCipher, StreamCipher
 from ._hash import sha256
-from ._util import byte_size, xor
-from ._verify import Hash
+from ._verify import HMAC, SHA1, Hash
 
 
 class RNG[SeedType: (int, bytes)]:
@@ -238,6 +238,51 @@ class Fortuna(CipherRNG):
     def _log_pool_sizes(self) -> None:
         sizes = ", ".join(f"P{i}: {len(pool)} B" for i, pool in enumerate(self._pools))
         log.debug("[Fortuna] %s", sizes)
+
+
+class HOTP(RNG[int]):
+    @staticmethod
+    def code(hmac: HMAC, counter: int, digits: int = 6) -> int:
+        if digits < 1 or digits > 10:  # noqa: PLR2004
+            err_msg = "Digits must be between 1 and 10"
+            raise ValueError(err_msg)
+        mac = hmac.compute_code(counter.to_bytes(8))
+        offset = mac[-1] & 0x0F
+        code = (
+            ((mac[offset] & 0x7F) << 24)
+            | ((mac[offset + 1] & 0xFF) << 16)
+            | ((mac[offset + 2] & 0xFF) << 8)
+            | (mac[offset + 3] & 0xFF)
+        )
+        return code % (10**digits)
+
+    def __init__(self, key: bytes, digits: int = 6, counter: int = 0) -> None:
+        self._hmac = HMAC(SHA1(), key)
+        self._digits = max(1, min(10, digits))
+        self._counter = max(0, counter)
+
+    def __next__(self) -> int:
+        code = self.code(self._hmac, self._counter, self._digits)
+        self._counter += 1
+        return code
+
+    def set_seed(self, seed: int) -> None:
+        self._counter = seed
+
+
+class TOTP(RNG[int]):
+    def __init__(self, key: bytes, digits: int = 6, period: int = 30, epoch: int = 0) -> None:
+        self._hmac = HMAC(SHA1(), key)
+        self._digits = max(1, min(10, digits))
+        self._period = max(1, period)
+        self._epoch = epoch
+
+    def __next__(self) -> int:
+        t = int((time.time() - self._epoch) / self._period)
+        return HOTP.code(self._hmac, t, self._digits)
+
+    def set_seed(self, seed: int) -> None:
+        self._epoch = seed
 
 
 def random_bytes(size: int) -> bytes:

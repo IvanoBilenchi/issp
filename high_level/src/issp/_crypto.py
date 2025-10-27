@@ -11,9 +11,9 @@ from cryptography.hazmat.primitives.asymmetric import (
 )
 from cryptography.hazmat.primitives.ciphers import algorithms, modes
 
+from ._bytes import blocks, split, xor
 from ._comm import Layer, Message
 from ._pad import pkcs1v15_unpad, pkcs7_pad, pkcs7_unpad
-from ._util import blocks, split, xor
 
 if TYPE_CHECKING:
     from collections.abc import Iterator

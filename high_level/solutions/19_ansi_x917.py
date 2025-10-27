@@ -8,7 +8,7 @@
 
 import time
 
-from issp import AES256, RNG, log, xor
+from issp import AES256, RNG, log, run_main, xor
 
 
 class ANSIx917(RNG[bytes]):
@@ -37,7 +37,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    try:
-        main()
-    except KeyboardInterrupt:
-        log.info("Interrupted by user, exiting.")
+    run_main(main)

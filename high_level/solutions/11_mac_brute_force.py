@@ -30,7 +30,7 @@ def mallory(channel: Channel) -> None:
     body = msg.body[hmac.code_size :]
     existing_mac = msg.body[: hmac.code_size]
 
-    for key in generate_bytes(length=4, alphabet="0123456789"):
+    for key in generate_bytes(length=4, charset="0123456789"):
         hmac.key = key
         if hmac.compute_code(body) == existing_mac:
             log.info("[Mallory] Found key: %s", key)

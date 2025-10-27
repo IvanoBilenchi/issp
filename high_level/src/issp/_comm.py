@@ -8,7 +8,6 @@ import time
 from typing import TYPE_CHECKING
 
 from . import _log as log
-from ._util import snake_to_camel
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
@@ -16,8 +15,8 @@ if TYPE_CHECKING:
 
 
 type JSONBody = ComplexBody | str
-type ComplexBody = dict[Any, Any] | list[Any]
-type SimpleBody = bytes | bytearray | str
+type ComplexBody = dict[str, Any] | list[Any]
+type SimpleBody = bytes | str
 type Body = ComplexBody | SimpleBody
 
 
@@ -113,6 +112,30 @@ class Message:
         """
         return Message(self.sender, self.recipient, body or self.body)
 
+    def json_dict(self) -> dict[str, Any]:
+        """
+        Get the body of the message decoded as a JSON-compatible dictionary.
+
+        :return: The body of the message as a JSON-compatible dictionary.
+        """
+        body = _to_json(self.body)
+        if not isinstance(body, dict):
+            err_msg = "Message body is not a JSON object"
+            raise ValueError(err_msg)  # noqa: TRY004
+        return body
+
+    def json_list(self) -> list[Any]:
+        """
+        Get the body of the message decoded as a JSON-compatible list.
+
+        :return: The body of the message as a JSON-compatible list.
+        """
+        body = _to_json(self.body)
+        if not isinstance(body, list):
+            err_msg = "Message body is not a JSON array"
+            raise ValueError(err_msg)  # noqa: TRY004
+        return body
+
 
 class Channel:
     """
@@ -157,6 +180,7 @@ class Channel:
         *,
         priority: int | None = None,
         timeout: float | None = None,
+        quiet: bool = False,
     ) -> None:
         """
         Send a message through the communication medium.
@@ -172,7 +196,8 @@ class Channel:
         except Exception as e:
             log.warning("[%s] %s", self._name, e)
             return
-        log.info("[%s] Sent: %s", self._name, msg)
+        if not quiet:
+            log.info("[%s] Sent: %s", self._name, msg)
 
     def receive(
         self,
@@ -180,6 +205,7 @@ class Channel:
         *,
         priority: int | None = None,
         timeout: float | None = None,
+        quiet: bool = False,
     ) -> Message:
         """
         Receive a message from the communication medium.
@@ -200,10 +226,17 @@ class Channel:
         except Exception as e:
             log.warning("[%s] %s", self._name, e)
             return Message.empty()
-        log.info("[%s] Received: %s", self._name, msg)
+        if not quiet:
+            log.info("[%s] Received: %s", self._name, msg)
         return msg
 
-    def peek(self, *, priority: int | None = None, timeout: float | None = None) -> Message:
+    def peek(
+        self,
+        *,
+        priority: int | None = None,
+        timeout: float | None = None,
+        quiet: bool = False,
+    ) -> Message:
         """
         Peek at a message in the communication medium without removing it.
 
@@ -219,8 +252,29 @@ class Channel:
         except Exception as e:
             log.warning("[%s] %s", self._name, e)
             return Message.empty()
-        log.info("[%s] Peeked: %s", self._name, msg)
+        if not quiet:
+            log.info("[%s] Peeked: %s", self._name, msg)
         return msg
+
+    def request(
+        self,
+        msg: Message,
+        *,
+        priority: int | None = None,
+        timeout: float | None = None,
+        quiet: bool = False,
+    ) -> Message:
+        """
+        Send a message and wait for a response.
+
+        :param msg: The message to be sent.
+        :param priority: The priority level for writing to and reading from the medium.
+                         If None, an instance-specific default priority is used.
+        :param timeout: The maximum time to wait for a response, in seconds.
+        :return: The received response message.
+        """
+        self.send(msg, priority=priority, timeout=timeout, quiet=quiet)
+        return self.receive(msg.sender, priority=priority, timeout=timeout, quiet=quiet)
 
     def wait(self, ticks: int = 1) -> None:
         """
@@ -349,14 +403,14 @@ class Actor:
         target: Callable[..., None],
         name: str | None = None,
         priority: int = 0,
-        stacks: Sequence[Layer] = (),
-        data: Sequence[Any] = (),
+        stacks: Sequence[Layer] | None = None,
+        data: Sequence[Any] | None = None,
     ) -> None:
         self.target = target
-        self.name = name or snake_to_camel(target.__name__)
+        self.name = name or _snake_to_camel(target.__name__)
         self.priority = priority
-        self.stacks = stacks or (Plaintext(),)
-        self.data = data
+        self.stacks = (Plaintext(),) if stacks is None else stacks
+        self.data = () if data is None else data
 
 
 class Event:
@@ -499,7 +553,7 @@ class BytesAwareJSONDecoder(json.JSONDecoder):
         if isinstance(obj, dict):
             new_obj: dict[Any, Any] = {}
             for key, value in obj.items():
-                if isinstance(key, str) and key.endswith("_b64"):
+                if key.endswith("_b64"):
                     new_obj[key[:-4]] = base64.b64decode(value)
                 elif isinstance(value, str):
                     new_obj[key] = value
@@ -521,7 +575,7 @@ def _from_json(data: ComplexBody) -> bytes | None:
         return None
 
 
-def _to_json(data: bytes | bytearray) -> Body | None:
+def _to_json(data: bytes | bytearray) -> JSONBody | None:
     try:
         return json.loads(data, cls=BytesAwareJSONDecoder)
     except Exception:
@@ -540,3 +594,7 @@ def _to_utf8(data: bytes | bytearray) -> str | None:
         return data.decode()
     except Exception:
         return None
+
+
+def _snake_to_camel(s: str) -> str:
+    return "".join(word.capitalize() for word in s.split("_"))
