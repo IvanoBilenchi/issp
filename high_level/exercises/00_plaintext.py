@@ -10,7 +10,7 @@
 #   especially the `receive`, `send`, and `peek` methods.
 
 
-from issp import Actor, Channel, Message
+from issp import Actor, Channel, Message, run_main
 
 
 def alice(channel: Channel) -> None:
@@ -32,4 +32,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    run_main(main)

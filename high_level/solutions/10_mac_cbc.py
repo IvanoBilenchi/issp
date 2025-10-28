@@ -11,7 +11,7 @@
 
 import os
 
-from issp import Actor, Channel, Message, aes256_encrypt_block, log, pkcs7_pad, xor
+from issp import Actor, Channel, Message, aes256_encrypt_block, log, pkcs7_pad, run_main, xor
 
 BLOCK_SIZE = 16
 
@@ -66,4 +66,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    run_main(main)

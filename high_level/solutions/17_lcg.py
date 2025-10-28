@@ -14,7 +14,7 @@
 # 1. Implement the LCG RNG.
 # 2. Allow Mallory to eavesdrop on the communication by breaking the LCG.
 
-from issp import RNG, Actor, ChaCha20, Channel, Message, log, random_int
+from issp import RNG, Actor, ChaCha20, Channel, Message, log, random_int, run_main
 
 KEY_SIZE = 32
 
@@ -128,4 +128,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    run_main(main)

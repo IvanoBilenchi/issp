@@ -392,11 +392,8 @@ class Actor:
             thread = threading.Thread(target=a.target, args=(*channels, *a.data), daemon=True)
             threads.append(thread)
             thread.start()
-        try:
-            for t in threads:
-                t.join()
-        except KeyboardInterrupt:
-            log.info("Interrupted by user, exiting.")
+        for t in threads:
+            t.join()
 
     def __init__(
         self,

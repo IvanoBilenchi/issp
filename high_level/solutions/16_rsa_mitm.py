@@ -7,7 +7,7 @@
 # Allow Mallory to impersonate Alice when communicating with Bob.
 
 
-from issp import RSA, Actor, Channel, Message, Signature
+from issp import RSA, Actor, Channel, Message, Signature, run_main
 
 
 def alice(channel: Channel) -> None:
@@ -36,8 +36,8 @@ def mallory(channel: Channel) -> None:
     channel.send(Message("Alice", "Bob", pub_key.key_bytes))
 
     # Optional: wait for Alice's message and discard it before sending her own.
-    # channel.wait()
-    # channel.receive()
+    channel.wait()
+    channel.receive()
 
     channel = channel.with_stack(Signature(pri_key))
     channel.send(Message("Alice", "Bob", "Screw you, Bob!"))
@@ -48,4 +48,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    run_main(main)

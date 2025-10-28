@@ -10,7 +10,7 @@
 # - You can use the `sha256` function or the `SHA256` class from the `issp` module.
 
 
-from issp import Actor, Channel, Message, log
+from issp import Actor, Channel, Message, log, run_main
 
 DIGEST_SIZE = 32  # SHA-256 produces a 32-byte hash.
 
@@ -57,4 +57,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    run_main(main)

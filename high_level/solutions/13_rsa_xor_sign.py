@@ -14,7 +14,7 @@
 #   when the hash function is based on XOR.
 
 
-from issp import RSA, Actor, Channel, Hash, Message, Signature, xor, zero_pad
+from issp import RSA, Actor, Channel, Hash, Message, Signature, run_main, xor, zero_pad
 
 SIGNATURE_SIZE = 256
 
@@ -66,4 +66,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    run_main(main)

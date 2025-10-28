@@ -11,7 +11,7 @@
 # - Assume that Mallory knows that the key is a 4-digit PIN.
 
 
-from issp import HMAC, Actor, Channel, Message, generate_bytes, log
+from issp import HMAC, Actor, Channel, Message, generate_bytes, log, run_main
 
 
 def alice(channel: Channel) -> None:
@@ -55,4 +55,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    run_main(main)

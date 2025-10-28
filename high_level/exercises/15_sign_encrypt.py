@@ -6,7 +6,7 @@
 
 import os
 
-from issp import RSA, Actor, AsymmetricKey, Channel, Message, log
+from issp import RSA, Actor, AsymmetricKey, Channel, Message, log, run_main
 
 IV_SIZE = 16
 SIGNATURE_SIZE = 256
@@ -52,4 +52,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    run_main(main)

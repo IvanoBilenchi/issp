@@ -16,6 +16,7 @@ from issp import (
     log,
     pkcs7_pad,
     pkcs7_unpad,
+    run_main,
     xor,
 )
 
@@ -70,4 +71,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    run_main(main)

@@ -22,7 +22,7 @@
 #   after finding the seed used to generate the HMAC key.
 
 
-from issp import HMAC, RNG, Actor, ChaCha20, Channel, Message, log, sha256
+from issp import HMAC, RNG, Actor, ChaCha20, Channel, Message, log, run_main, sha256
 
 KEY_SIZE = 32
 
@@ -102,4 +102,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    run_main(main)

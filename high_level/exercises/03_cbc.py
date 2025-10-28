@@ -7,7 +7,7 @@
 
 import os
 
-from issp import Actor, Channel, Message, log
+from issp import Actor, Channel, Message, log, run_main
 
 BLOCK_SIZE = 16
 
@@ -45,4 +45,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    run_main(main)

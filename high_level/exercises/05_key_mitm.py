@@ -8,7 +8,7 @@
 
 import os
 
-from issp import Actor, Channel, Message, log, xor
+from issp import Actor, Channel, Message, log, run_main, xor
 
 
 def encrypt(data: bytes, key: bytes) -> bytes:
@@ -47,5 +47,9 @@ def mallory(channel: Channel) -> None:
     channel.wait()
 
 
-if __name__ == "__main__":
+def main() -> None:
     Actor.start(Actor(alice), Actor(bob), Actor(mallory, priority=1))
+
+
+if __name__ == "__main__":
+    run_main(main)

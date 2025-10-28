@@ -11,7 +11,7 @@
 
 import os
 
-from issp import Actor, Channel, Message, aes256_decrypt_block, aes256_encrypt_block, log
+from issp import Actor, Channel, Message, aes256_decrypt_block, aes256_encrypt_block, log, run_main
 
 BLOCK_SIZE = 16  # AES256 block size in bytes
 
@@ -65,4 +65,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    run_main(main)

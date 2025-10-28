@@ -22,7 +22,7 @@
 
 import os
 
-from issp import AES256, CBC, HMAC, SHA256, Actor, Channel, Message, Plaintext, log
+from issp import AES256, CBC, HMAC, SHA256, Actor, Channel, Message, Plaintext, log, run_main
 
 
 def alice(plain_channel: Channel, kdc_channel: Channel) -> None:
@@ -82,4 +82,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    run_main(main)

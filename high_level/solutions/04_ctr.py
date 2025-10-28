@@ -9,14 +9,7 @@
 import os
 from collections.abc import Iterator
 
-from issp import (
-    Actor,
-    Channel,
-    Message,
-    aes256_encrypt_block,
-    log,
-    xor,
-)
+from issp import Actor, Channel, Message, aes256_encrypt_block, log, run_main, xor
 
 BLOCK_SIZE = 16
 
@@ -71,4 +64,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    run_main(main)

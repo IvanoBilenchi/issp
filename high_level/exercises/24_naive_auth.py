@@ -14,17 +14,12 @@
 #   and deserialized automatically as JSON by the `issp` library, so you don't need to worry
 #   about that.
 # - The `Server` class has a `db` dictionary attribute that you can use to store user records.
+# - The `request` method of the `Channel` class is a shorthand for sending a message and waiting
+#   for a response.
 
 from typing import Any
 
-from issp import (
-    HMAC,
-    Actor,
-    BankServer,
-    ChaCha20,
-    Channel,
-    Message,
-)
+from issp import HMAC, Actor, BankServer, ChaCha20, Channel, Message, run_main
 
 
 class Server(BankServer):
@@ -82,4 +77,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    run_main(main)

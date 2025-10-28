@@ -7,7 +7,7 @@
 # 2. Allow Mallory to tamper with the communication. Can she also eavesdrop? Why?
 
 
-from issp import RSA, Actor, AsymmetricKey, Channel, Message, log
+from issp import RSA, Actor, AsymmetricKey, Channel, Message, log, run_main
 
 
 def encrypt(data: bytes, rsa_key: AsymmetricKey) -> bytes:
@@ -54,4 +54,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    run_main(main)

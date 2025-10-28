@@ -10,7 +10,7 @@
 
 import os
 
-from issp import Actor, Channel, Message, log
+from issp import Actor, Channel, Message, log, run_main
 
 MAC_SIZE = 32
 
@@ -62,4 +62,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    run_main(main)

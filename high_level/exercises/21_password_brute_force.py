@@ -15,7 +15,7 @@ hash_fn = sha256
 CHARSET = string.ascii_lowercase
 
 
-def crack_password(target: bytes, charset: str) -> str:
+def crack_password(target: bytes) -> str:
     # TO-DO: Find the password through brute-force.
     err_msg = "Password not found"
     raise ValueError(err_msg)
@@ -26,7 +26,7 @@ def main() -> None:
     log.info("Password to crack: %s", password)
     password = hash_fn(password.encode())
     log.info("Cracking...")
-    found = crack_password(password, CHARSET)
+    found = crack_password(password)
     log.info("Password found: %s", found)
 
 

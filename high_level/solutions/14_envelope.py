@@ -9,7 +9,7 @@
 
 import os
 
-from issp import RSA, Actor, AsymmetricKey, ChaCha20, Channel, Message, log
+from issp import RSA, Actor, AsymmetricKey, ChaCha20, Channel, Message, log, run_main
 
 
 def encrypt(data: bytes, rsa_key: AsymmetricKey) -> bytes:
@@ -60,4 +60,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    run_main(main)

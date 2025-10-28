@@ -12,15 +12,7 @@
 # - The `keychain` dictionary maps actor names to their public keys.
 
 
-from issp import (
-    RSA,
-    Actor,
-    AsymmetricKey,
-    Channel,
-    Message,
-    log,
-    sha256,
-)
+from issp import RSA, Actor, AsymmetricKey, Channel, Message, log, run_main, sha256
 
 SIGNATURE_SIZE = 256  # RSA-2048 signature size in bytes.
 
@@ -77,4 +69,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    run_main(main)

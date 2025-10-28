@@ -11,7 +11,7 @@
 
 import os
 
-from issp import Actor, ChaCha20, Channel, Message, log, sha256
+from issp import Actor, ChaCha20, Channel, Message, log, run_main, sha256
 
 DIGEST_SIZE = 32
 IV_SIZE = 16
@@ -66,4 +66,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    run_main(main)

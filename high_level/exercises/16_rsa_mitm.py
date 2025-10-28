@@ -7,7 +7,7 @@
 # Allow Mallory to impersonate Alice when communicating with Bob.
 
 
-from issp import RSA, Actor, Channel, Message, Signature
+from issp import RSA, Actor, Channel, Message, Signature, run_main
 
 
 def alice(channel: Channel) -> None:
@@ -42,4 +42,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    run_main(main)

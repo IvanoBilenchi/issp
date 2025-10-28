@@ -6,7 +6,7 @@
 
 import os
 
-from issp import Actor, Channel, Message, log
+from issp import Actor, Channel, Message, log, run_main
 
 
 def xor(a: bytes, b: bytes) -> bytes:
@@ -44,4 +44,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    run_main(main)
