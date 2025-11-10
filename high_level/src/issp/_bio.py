@@ -9,4 +9,4 @@ class BiometricSensor:
         self._noise = noise
 
     def acquire_template(self) -> list[float]:
-        return [v + random.normalvariate(0, self._noise) for v in self._base]
+        return [abs(v + random.normalvariate(0, self._noise)) for v in self._base]

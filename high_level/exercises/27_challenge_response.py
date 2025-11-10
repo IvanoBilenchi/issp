@@ -22,7 +22,11 @@ from issp import Actor, BankServer, Channel, Message, run_main, scrypt
 class Server(BankServer):
     def __init__(self, name: str, channels: Channel | dict[str, Channel]) -> None:
         super().__init__(name, channels)
-        self.handlers["request_transaction"] = self.challenge
+        self.handlers["request_transaction"] = self._challenge
+
+    def _challenge(self, sender: str, body: dict[str, Any]) -> dict[str, Any]:
+        del body  # Unused
+        return self.challenge(sender)
 
     def register(self, sender: str, body: dict[str, Any]) -> bool:
         if sender in self.db:
@@ -35,7 +39,7 @@ class Server(BankServer):
         }
         return True
 
-    def challenge(self, sender: str, body: dict[str, Any]) -> dict[str, Any]:
+    def challenge(self, sender: str) -> dict[str, Any]:
         # TO-DO: Implement challenge generation and return the challenge along with the salt.
         return {"challenge": b"", "salt": b""}
 
