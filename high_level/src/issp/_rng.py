@@ -240,7 +240,21 @@ class Fortuna(CipherRNG):
         log.debug("[Fortuna] %s", sizes)
 
 
-class HOTP(RNG[int]):
+class OTP(RNG[int]):
+    """Base class for One-Time Password (OTP) generators."""
+
+    @property
+    def value_size(self) -> int:
+        return byte_size(10**self.digits - 1)
+
+    @property
+    def digits(self) -> int:
+        return getattr(self, "_digits", 6)
+
+
+class HOTP(OTP):
+    """HMAC-based One-Time Password (HOTP) generator."""
+
     @staticmethod
     def code(hmac: HMAC, counter: int, digits: int = 6) -> int:
         if digits < 1 or digits > 10:  # noqa: PLR2004
@@ -271,6 +285,8 @@ class HOTP(RNG[int]):
 
 
 class TOTP(RNG[int]):
+    """Time-based One-Time Password (TOTP) generator."""
+
     def __init__(self, key: bytes, digits: int = 6, period: int = 30, epoch: int = 0) -> None:
         self._hmac = HMAC(SHA1(), key)
         self._digits = max(1, min(10, digits))

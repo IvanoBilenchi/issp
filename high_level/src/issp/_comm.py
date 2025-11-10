@@ -170,6 +170,7 @@ class Channel:
         self._medium = medium
         self._name = name
         self._priority = priority
+        self._request_no = 0
 
     def _get_priority(self, override: int | None) -> int:
         return self._priority if override is None else override
@@ -194,10 +195,10 @@ class Channel:
             enc_msg = self.stack.encode(msg.copy())
             self._medium.write(enc_msg, self._get_priority(priority), timeout=timeout)
         except Exception as e:
-            log.warning("[%s] %s", self._name, e)
-            return
-        if not quiet:
-            log.info("[%s] Sent: %s", self._name, msg)
+            self._log_exception(e)
+        else:
+            if not quiet:
+                self._log_msg("Sent", msg)
 
     def receive(
         self,
@@ -224,10 +225,11 @@ class Channel:
             msg = self._medium.read(recipient, self._get_priority(priority), timeout=timeout)
             msg = self.stack.decode(msg)
         except Exception as e:
-            log.warning("[%s] %s", self._name, e)
-            return Message.empty()
-        if not quiet:
-            log.info("[%s] Received: %s", self._name, msg)
+            self._log_exception(e)
+            msg = Message.empty()
+        else:
+            if not quiet:
+                self._log_msg("Received", msg)
         return msg
 
     def peek(
@@ -250,10 +252,11 @@ class Channel:
             msg = self._medium.read(Event.PEEK_TOKEN, priority, clear=False, timeout=timeout)
             msg = self.stack.decode(msg)
         except Exception as e:
-            log.warning("[%s] %s", self._name, e)
-            return Message.empty()
-        if not quiet:
-            log.info("[%s] Peeked: %s", self._name, msg)
+            self._log_exception(e)
+            msg = Message.empty()
+        else:
+            if not quiet:
+                self._log_msg("Peeked", msg)
         return msg
 
     def request(
@@ -292,6 +295,12 @@ class Channel:
         :return: New channel instance.
         """
         return Channel(self._name, self._medium, stack, self._priority)
+
+    def _log_msg(self, prefix: str, msg: Message) -> None:
+        log.info("[%s] %s: %s", self._name, prefix, msg)
+
+    def _log_exception(self, e: Exception) -> None:
+        log.warning("[%s] %s", self._name, e)
 
 
 class Layer:

@@ -33,16 +33,16 @@ class Server:
             return False
 
         channel = self.channels.get(msg.sender, self.plain)
-        msg = channel.stack.decode(msg)
-        log.info("[%s] Received: %s", self.name, msg)
         action = None
 
         try:
+            msg = channel.stack.decode(msg)
+            log.info("[%s] Received: %s", self.name, msg)
             body = msg.json_dict()
             action = body["action"]
             response = self.handlers[action](msg.sender, body)
         except Exception as e:
-            log.error("Error handling request: %s", str(e))
+            log.warning("[%s] %s", self.name, e)
             response = {"status": "error"}
 
         if action:
@@ -59,11 +59,7 @@ class BankServer(Server):
     def authenticate(self, sender: str, body: dict[str, Any]) -> bool:
         raise NotImplementedError
 
-    def __init__(
-        self,
-        name: str,
-        channels: Channel | dict[str, Channel],
-    ) -> None:
+    def __init__(self, name: str, channels: Channel | dict[str, Channel]) -> None:
         super().__init__(name, channels)
         self.db: dict[str, dict[str, Any]] = {}
         self.handlers["register"] = self._register

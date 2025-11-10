@@ -9,4 +9,4 @@ def run_main(fn: Callable[..., None]) -> None:
     except KeyboardInterrupt:
         log.info("Interrupted by user, exiting.")
     except Exception as e:
-        log.error("%s", e)
+        log.error("%s: %s", type(e).__name__, e)

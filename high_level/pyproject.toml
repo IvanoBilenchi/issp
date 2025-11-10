@@ -46,5 +46,5 @@ ignore = [
 isort.combine-as-imports = true
 
 [tool.ruff.lint.per-file-ignores]
-"!src/**.py" = ["ARG001", "D", "INP001", "S105"]
-"src/issp/res/**.py" = ["ARG001", "D", "INP001", "S105"]
+"!src/**.py" = ["ARG001", "D", "INP001", "PLR2004", "S105"]
+"src/issp/res/**.py" = ["ARG001", "D", "INP001", "PLR2004", "S105"]

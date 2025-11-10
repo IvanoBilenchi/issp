@@ -1,6 +1,7 @@
 """Exported symbols."""
 
 from . import _log as log
+from ._bio import BiometricSensor
 from ._bytes import blocks, byte_size, generate_bytes, to_bytes, xor
 from ._comm import (
     Actor,
@@ -78,6 +79,7 @@ __all__ = [
     "AsymmetricCipher",
     "AsymmetricKey",
     "BankServer",
+    "BiometricSensor",
     "BlockCipher",
     "BlockCipherMode",
     "ChaCha20",

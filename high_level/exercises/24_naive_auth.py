@@ -38,29 +38,29 @@ def server(alice_channel: Channel) -> None:
 
 def alice(channel: Channel) -> None:
     password = "p4ssw0rd"
-    message = {
+    msg = {
         "action": "register",
         "password": password,
         "balance": 100000.0,
     }
-    channel.request(Message("Alice", "Server", message))
+    channel.request(Message("Alice", "Server", msg))
 
-    message = {
+    msg = {
         "action": "perform_transaction",
         "password": password,
         "recipient": "Mallory",
         "amount": 1000.0,
     }
-    channel.request(Message("Alice", "Server", message))
+    channel.request(Message("Alice", "Server", msg))
 
 
 def mallory(channel: Channel) -> None:
-    message = {
+    msg = {
         "action": "register",
         "password": "s3cr3t",
         "balance": 1000.0,
     }
-    channel.request(Message("Mallory", "Server", message))
+    channel.request(Message("Mallory", "Server", msg))
 
     # TO-DO: Replace the following lines with a replay attack of Alice's transaction.
     channel.wait(2)
