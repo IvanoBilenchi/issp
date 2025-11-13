@@ -1,0 +1,91 @@
+# Alice owes a sum of money to Mallory, which she wants to pay back. To do so, they decide
+# to register with an online service that will facilitate the transaction.
+# Alice communicates with the service over an encrypted and authenticated channel, so
+# she is confident that Mallory cannot do anything malicious during the communication.
+#
+# Your task is to:
+# 1. Implement a naive authentication protocol where the user authenticates by sending
+#    a username and password to the server. The server should store the password hashed
+#    and salted using a slow hash function.
+# 2. Help Mallory attack the protocol by replaying Alice's transaction request.
+#
+# Hints:
+# - In this exercise, message bodies are represented as dictionaries. They are serialized
+#   and deserialized automatically as JSON by the `issp` library, so you don't need to worry
+#   about that.
+# - The `Server` class has a `db` dictionary attribute that you can use to store user records.
+# - The `request` method of the `Channel` class is a shorthand for sending a message and waiting
+#   for a response.
+
+import os
+from typing import Any
+
+from issp import HMAC, Actor, BankServer, ChaCha20, Channel, Message, run_main, scrypt
+
+
+class Server(BankServer):
+    def register(self, sender: str, body: dict[str, Any]) -> bool:
+        if sender in self.db:
+            return False
+
+        self.db[sender] = {
+            "salt": (salt := os.urandom(16)),
+            "password": scrypt(body["password"], salt=salt),
+            "balance": body["balance"],
+        }
+        return True
+
+    def authenticate(self, sender: str, body: dict[str, Any]) -> bool:
+        if (record := self.db.get(sender)) is None:
+            return False
+        return scrypt(body["password"], salt=record["salt"]) == record["password"]
+
+
+def server(alice_channel: Channel) -> None:
+    Server("Server", {"Alice": alice_channel}).listen()
+
+
+def alice(channel: Channel) -> None:
+    password = "p4ssw0rd"
+    msg = {
+        "action": "register",
+        "password": password,
+        "balance": 100000.0,
+    }
+    channel.request(Message("Alice", "Server", msg))
+
+    msg = {
+        "action": "perform_transaction",
+        "password": password,
+        "recipient": "Mallory",
+        "amount": 1000.0,
+    }
+    channel.request(Message("Alice", "Server", msg))
+
+
+def mallory(channel: Channel) -> None:
+    msg = {
+        "action": "register",
+        "password": "s3cr3t",
+        "balance": 1000.0,
+    }
+    channel.request(Message("Mallory", "Server", msg))
+
+    channel.wait(2)
+    msg = channel.peek()
+
+    channel.wait(2)
+    channel.send(msg)
+
+
+def main() -> None:
+    alice_server = ChaCha20() | HMAC()
+    Actor.start(
+        Actor(alice, stacks=(alice_server,)),
+        Actor(server, stacks=(alice_server,), priority=1),
+        Actor(mallory, priority=2),
+    )
+
+
+if __name__ == "__main__":
+    run_main(main)
