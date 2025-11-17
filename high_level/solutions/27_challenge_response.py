@@ -4,9 +4,9 @@
 # challenge-response protocol.
 #
 # Your task is to implement the challenge-response protocol according to the following spec:
-# - h = scrypt
-# - f = h(challenge || h(password))
-# - challenge = random 16-byte nonce
+# - H = scrypt
+# - F = H(challenge || H(password))
+# - Challenge = random 16-byte nonce
 #
 # Hints:
 # - The endpoint to request the challenge is the "request_transaction" action.
@@ -40,12 +40,14 @@ class Server(BankServer):
         return True
 
     def challenge(self, sender: str) -> dict[str, Any]:
-        # TO-DO: Implement challenge generation and return the challenge along with the salt.
-        return {"challenge": b"", "salt": b""}
+        record = self.db[sender]
+        record["challenge"] = os.urandom(16)
+        return {"challenge": record["challenge"], "salt": record["salt"]}
 
     def authenticate(self, sender: str, body: dict[str, Any]) -> bool:
-        # TO-DO: Implement response verification.
-        return False
+        if (record := self.db.get(sender)) is None:
+            return False
+        return scrypt(record.pop("challenge") + record["password"]) == body["response"]
 
 
 def server(channel: Channel) -> None:
@@ -61,9 +63,12 @@ def alice(channel: Channel) -> None:
     }
     channel.request(Message("Alice", "Server", msg))
 
-    # TO-DO: Implement Alice's behavior according to the challenge-response protocol.
+    msg = {"action": "request_transaction"}
+    msg = channel.request(Message("Alice", "Server", msg)).json_dict()
+
     msg = {
         "action": "perform_transaction",
+        "response": scrypt(msg["challenge"] + scrypt(password, salt=msg["salt"])),
         "recipient": "Mallory",
         "amount": 1000.0,
     }

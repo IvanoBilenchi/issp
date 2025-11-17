@@ -15,6 +15,7 @@
 #   using the `acquire_template()` method.
 # - You can turn distances into similarity scores using the formula: 1 / (1 + distance)
 
+import os
 from typing import Any
 
 from issp import (
@@ -26,6 +27,14 @@ from issp import (
     Message,
     run_main,
 )
+
+
+def euclidean_distance(a: list[float], b: list[float]) -> float:
+    return sum((x - y) ** 2 for x, y in zip(a, b, strict=True)) ** 0.5
+
+
+def similarity(a: list[float], b: list[float]) -> float:
+    return 1 / (1 + euclidean_distance(a, b))
 
 
 class Server(BankServer):
@@ -54,16 +63,23 @@ class Server(BankServer):
         return True
 
     def challenge(self, sender: str) -> dict[str, Any]:
-        # TO-DO: Implement challenge generation and return the challenge.
-        return {"challenge": b""}
+        challenge = os.urandom(16)
+        self.db[sender]["challenge"] = challenge
+        return {"challenge": challenge}
 
     def authenticate(self, sender: str, body: dict[str, Any]) -> bool:
-        # TO-DO: Implement biometric authentication with challenge verification.
-        return False
+        if (record := self.db.get(sender)) is None:
+            return False
+        if body["challenge"] != record["challenge"]:
+            return False
+        return similarity(body["template"], record["template"]) > 0.95
 
     def identify(self, template: list[float]) -> str | None:
-        # Implement biometric identification.
-        return None
+        best = (None, 0.95)
+        for user, record in self.db.items():
+            if score := similarity(template, record["template"]) > best[1]:
+                best = (user, score)
+        return best[0]
 
 
 def server(alice_channel: Channel, mallory_channel: Channel) -> None:
@@ -84,9 +100,13 @@ def alice(channel: Channel, sensor: BiometricSensor) -> None:
     }
     channel.request(Message("Alice", "Server", msg))
 
-    # TO-DO: Implement Alice's behavior according to the biometric challenge-response protocol.
+    msg = {"action": "request_transaction"}
+    msg = channel.request(Message("Alice", "Server", msg)).json_dict()
+
     msg = {
         "action": "perform_transaction",
+        "challenge": msg["challenge"],
+        "template": sensor.acquire_template(),
         "recipient": "Mallory",
         "amount": 1000.0,
     }

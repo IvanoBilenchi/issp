@@ -14,10 +14,12 @@ if TYPE_CHECKING:
     from typing import Any
 
 
-type JSONBody = ComplexBody | str
-type ComplexBody = dict[str, Any] | list[Any]
-type SimpleBody = bytes | str
-type Body = ComplexBody | SimpleBody
+type JSONDictBody = dict[str, Any]
+type JSONListBody = list[Any]
+type JSONStructBody = JSONListBody | JSONDictBody
+type JSONBody = JSONStructBody | str
+type RawBody = bytes | str
+type Body = RawBody | JSONBody
 
 
 class Message:
@@ -102,6 +104,9 @@ class Message:
     def __repr__(self) -> str:
         body = self.decode_body(self.body)
         return f"Message(from={self.sender!r}, to={self.recipient!r}, body={body!r})"
+
+    def __bool__(self) -> bool:
+        return not self.is_empty
 
     def copy(self, body: Body | None = None) -> Message:
         """
@@ -286,6 +291,16 @@ class Channel:
         :param ticks: The number of ticks to wait.
         """
         self._medium.wait(ticks)
+
+    def wait_for(self, sender: str) -> None:
+        """
+        Wait until a message from the specified sender is available on the communication medium.
+
+        :param sender: The sender whose message to wait for.
+        """
+        interval = self._medium.interval * 0.5
+        while self._medium.peek().sender != sender:
+            time.sleep(interval)
 
     def with_stack(self, stack: Layer) -> Channel:
         """
@@ -487,6 +502,10 @@ class EventQueue:
 
 
 class Medium:
+    @property
+    def interval(self) -> float:
+        return self._interval
+
     def __init__(self, interval: float = 1.0) -> None:
         self._msg: Message = Message.empty()
         self._interval = interval
@@ -505,6 +524,9 @@ class Medium:
             if not self._msg.is_empty:
                 self._read_queue.dequeue()
             self._wait_queue.dequeue_all()
+
+    def peek(self) -> Message:
+        return self._msg.copy()
 
     def read(
         self,
@@ -574,14 +596,14 @@ class BytesAwareJSONDecoder(json.JSONDecoder):
         return self._encode_bytes(super().decode(s))
 
 
-def _from_json(data: ComplexBody) -> bytes | None:
+def _from_json(data: JSONStructBody) -> bytes | None:
     try:
         return json.dumps(data, cls=BytesAwareJSONEncoder).encode()
     except Exception:
         return None
 
 
-def _to_json(data: bytes | bytearray) -> JSONBody | None:
+def _to_json(data: bytes) -> JSONBody | None:
     try:
         return json.loads(data, cls=BytesAwareJSONDecoder)
     except Exception:
@@ -595,7 +617,7 @@ def _from_utf8(data: str) -> bytes | None:
         return None
 
 
-def _to_utf8(data: bytes | bytearray) -> str | None:
+def _to_utf8(data: bytes) -> str | None:
     try:
         return data.decode()
     except Exception:

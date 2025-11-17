@@ -54,7 +54,7 @@ from ._rng import (
     random_int,
     random_string,
 )
-from ._server import BankServer, Server
+from ._server import BankServer, FileServer, Server
 from ._util import run_main
 from ._verify import CBCMAC, HMAC, SHA1, SHA256, Hash, Signature, Verifier
 
@@ -87,6 +87,7 @@ __all__ = [
     "Cipher",
     "CipherRNG",
     "Envelope",
+    "FileServer",
     "Fortuna",
     "Hash",
     "Message",
