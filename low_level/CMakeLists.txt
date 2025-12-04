@@ -9,8 +9,8 @@ project(issp
 
 set(ISSP_PROJECT_DIR "${CMAKE_CURRENT_LIST_DIR}")
 set(ISSP_EXAMPLES_DIR "${ISSP_PROJECT_DIR}/examples")
-set(ISSP_EXERCISES_DIR "${ISSP_PROJECT_DIR}/exercises")
-set(ISSP_SOLUTIONS_DIR "${ISSP_EXERCISES_DIR}/solutions")
+set(ISSP_C_EXERCISES_DIR "${ISSP_PROJECT_DIR}/c_exercises")
+set(ISSP_C_SOLUTIONS_DIR "${ISSP_C_EXERCISES_DIR}/solutions")
 set(ISSP_HACKMES_DIR "${ISSP_PROJECT_DIR}/hackmes")
 
 # Target settings
@@ -33,3 +33,5 @@ endfunction()
 # Sources
 
 generate_targets("${ISSP_EXAMPLES_DIR}" "example-")
+generate_targets("${ISSP_C_EXERCISES_DIR}" "exercise-")
+generate_targets("${ISSP_C_SOLUTIONS_DIR}" "solution-")
