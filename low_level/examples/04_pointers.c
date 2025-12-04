@@ -5,6 +5,8 @@ void basic_manipulation(void) {
     int a = 42;
     int *a_ptr = NULL;
     a_ptr = &a;
+    printf("Value of `a`: %d\n", a);
+    printf("Value of `a_ptr`: %p\n", a_ptr);
     printf("Value of `*a_ptr`: %d\n", *a_ptr);
     a = 43;
     printf("Value of `*a_ptr` after changing `a`: %d\n", *a_ptr);
