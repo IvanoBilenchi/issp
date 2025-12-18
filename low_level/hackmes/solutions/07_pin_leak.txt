@@ -1,0 +1,43 @@
+1. The program is affected by a format string vulnerability.
+
+The problematic line is:
+
+printf(buf);
+
+Since `buf` is user-controlled, this allows us to read the contents of the stack by providing
+a maliciously crafted password that contains format string specifiers. Since the `printf` function
+is invoked with no additional arguments, each provided format specifier will cause `printf` to
+interpret a slice of stack memory as if it were an argument.
+
+The bug can be fixed by changing the line to: `printf("%s", buf);`
+
+2. We know that the PIN is an 8-digit number, so one strategy would be to print memory
+as a sequence of unsigned integers, and try any 8 (or less) digit number printed to the console.
+
+As an example, the "%lu %lu %lu %lu %lu" string will leak 40 bytes of stack memory formatted
+as 5 unsigned long integers (on most 64 bit systems). If one of them has 8 digits or less,
+it is a candidate PIN.
+
+Another useful strategy when dealing with format string vulnerabilities is to use the %p format
+string specifier repeatedly, printing 8 bytes of stack memory conveniently formatted as hexadecimal
+values, and looking for known patterns.
+
+Example
+-------
+
+8-digit PIN: %p %p %p %p %p %p %p %p
+0x20c9a8e80 0x20b0dcd01 0x16da6a3c0 0x2542cee 0x16da6aa70 0x1 0x2542cee 0x7025207025207025 is not the correct PIN.
+
+> Notice the bytes of the last printed value: they are a sequence of \25 (ASCII '%'), \70 (ASCII 'p')
+  and \20 (ASCII ' '), exactly the format specifier we are using. We have found the `buf` variable.
+  The previous value is the PIN we are looking for, which comes right before `buf` in memory
+  (hexadecimal 0x2542cee = decimal 39070958). We can also confirm this by printing memory as
+  unsigned long integers:
+
+8-digit PIN: %lu %lu %lu %lu %lu %lu %lu %lu
+8801390208 8775388417 6134604736 39070958 6134606448 1 39070958 2338894488202996773 is not the correct PIN.
+
+> Look at the second-to-last value. It has exactly 8 digits and matches what we found earlier.
+
+8-digit PIN: 39070958
+Welcome, admin!

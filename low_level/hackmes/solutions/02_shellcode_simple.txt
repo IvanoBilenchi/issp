@@ -1,0 +1,18 @@
+1. The program is affected by a buffer overflow vulnerability.
+
+The problematic line is:
+
+user_input("User name", data.buf, sizeof(data));
+
+The last parameter should instead be `sizeof(data.buf) - 1` (16 bytes - the NULL terminator).
+Since it is considering the size of the whole `data` struct (24 bytes), this allows us
+to overflow the buffer by 8 bytes, writing within the bounds of the `fun` pointer.
+
+2. To call the shellcode function, we must fill the buffer by providing 16 arbitrary characters,
+then input the address of the shellcode function, paying attention to endianness. This
+will overwrite the legitimate function pointer, leading to the execution of the shellcode.
+
+Example (shellcode: 0x104167d08)
+--------------------------------
+User name: 1234567890123456\08\7d\16\04\01
+You got shell!

@@ -28,7 +28,13 @@ int main(int argc, char *argv[]) {
     } data = { .fun = greet };
     dlog_var(data);
 
-    user_input("User name", data.buf, sizeof(data.buf) + 1);
+    int len = user_input_int("User name length");
+    if (len >= BUF_SIZE) {
+        puts("User name too long!");
+        return 1;
+    }
+
+    user_input("User name", data.buf, len);
     dlog_var(data);
 
     data.fun(data.buf);

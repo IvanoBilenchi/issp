@@ -4,6 +4,7 @@
 //    authenticates as the admin user.
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "util.h"
@@ -15,16 +16,31 @@ int main(int argc, char *argv[]) {
     dlog_init(argc, argv);
     dlog_fun(main);
 
+    int const canary_value = random_int();
+    char password[PASS_SIZE];
+    random_string(password, sizeof(password) - 1);
+
     struct {
         char buf[BUF_SIZE];
-        char password[PASS_SIZE];
-    } data = { 0 };
-    random_string(data.password, sizeof(data.password) - 1);
-
-    user_input("Password", data.buf, sizeof(data));
+        int canary;
+        int authenticated;
+    } data = { .canary = canary_value };
     dlog_var(data);
 
-    if (strcmp(data.buf, data.password)) {
+    user_input("Password", data.buf, sizeof(data));
+
+    if (strcmp(data.buf, password) == 0) {
+        data.authenticated = 1;
+    }
+
+    dlog_var(data);
+
+    if (data.canary != canary_value) {
+        puts("Smashing detected, aborting...");
+        return 1;
+    }
+
+    if (!data.authenticated) {
         puts("Access denied.");
         return 1;
     }

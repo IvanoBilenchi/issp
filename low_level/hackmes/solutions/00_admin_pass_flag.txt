@@ -1,0 +1,18 @@
+1. The program is affected by a buffer overflow vulnerability.
+
+The problematic line is:
+
+user_input("Password", data.buf, sizeof(data));
+
+The last parameter should instead be `sizeof(data.buf) - 1` (16 bytes - the NULL terminator).
+Since it is considering the size of the whole `data` struct (20 bytes), this allows us
+to overflow the buffer by 4 bytes, writing within the bounds of the `authenticated` flag.
+
+2. Any input that is made of 16 arbitrary characters + 1 or more non-zero characters will work.
+The first 16 characters will fill `buf`, while the remaining ones will be written to `authenticated`,
+causing it to be evaluated to `true`.
+
+Example
+-------
+Password: 1234567890123456X
+Welcome, admin!

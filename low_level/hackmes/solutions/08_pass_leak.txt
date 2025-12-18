@@ -1,0 +1,37 @@
+1. The program is affected by a format string vulnerability.
+
+The problematic line is:
+
+printf(buf);
+
+Since `buf` is user-controlled, this allows us to read the contents of the stack by providing
+a maliciously crafted password that contains format string specifiers. Since the `printf` function
+is invoked with no additional arguments, each provided format specifier will cause `printf` to
+interpret a slice of stack memory as if it were an argument.
+
+The bug can be fixed by changing the line to: `printf("%s", buf);`
+
+2. Note that the password is located on the heap, so we cannot leak it by only printing the
+contents of the stack. The first thing we should do is understand where the `password` pointer
+variable is located on the stack. Since it is a pointer, we can input a sequence of %p
+specifiers, causing `printf` to print out memory as 8 bytes (64 bits) chunks
+formatted as pointers.
+
+As an example, the "%p %p %p %p %p" string will leak 40 bytes of stack memory formatted
+as 5 pointers. If one of them is the address of `password`, then we can input a second string
+with the corresponding "%p" specifier changed to a "%s". This will direct `printf` to interpret
+that memory area as a char pointer, dereference it, and print its contents, leaking the password.
+
+Example (password pointer: 0x13e606090)
+---------------------------------------
+
+Password: %p %p %p %p %p
+0x102653828 0x16d7aea28 0x13e606090 0x16d7aecb8 0x2 is not the correct password.
+> Notice that the third value is the `password` pointer.
+
+Password: %p %p %s
+0x100e348d8 0x16efca318 nu4h8cdxutijgo is not the correct password.
+> The password is "nu4h8cdxutijgo".
+
+Password: nu4h8cdxutijgo
+Welcome, admin!

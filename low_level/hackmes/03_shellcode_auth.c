@@ -27,9 +27,7 @@ int main(int argc, char *argv[]) {
         char buf[BUF_SIZE];
         int authenticated;
         void (*error)(void);
-    } data;
-    data.authenticated = 0;
-    data.error = auth_failure;
+    } data = { .error = auth_failure };
     dlog_var(data);
 
     user_input("Password", data.buf, sizeof(data));

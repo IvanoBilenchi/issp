@@ -16,7 +16,7 @@ int main(int argc, char *argv[]) {
     struct {
         char buf[BUF_SIZE];
         char secret[SECRET_SIZE];
-    } data;
+    } data = { 0 };
     random_string(data.secret, sizeof(data.secret) - 1);
 
     user_input("Echo", data.buf, sizeof(data.buf));

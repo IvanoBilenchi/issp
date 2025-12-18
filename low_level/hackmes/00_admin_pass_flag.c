@@ -20,10 +20,9 @@ int main(int argc, char *argv[]) {
     struct {
         char buf[BUF_SIZE];
         int authenticated;
-    } data;
-    data.authenticated = 0;
-
+    } data = { 0 };
     dlog_var(data);
+
     user_input("Password", data.buf, sizeof(data));
 
     if (strcmp(data.buf, password) == 0) {

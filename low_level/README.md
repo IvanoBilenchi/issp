@@ -4,15 +4,23 @@ Low-level security exercises and lab materials for the
 **Information Systems Security and Privacy** course at the
 [Polytechnic University of Bari](https://www.poliba.it).
 
+### Repo structure
+
+The repository is structured as follows:
+
+- `/exercises`: simple incomplete C programs designed to learn the basics of the C
+  programming language.
+- `/examples`: programs presented during the theoretical lectures to illustrate key C language
+  features and common systems programming pitfalls.
+- `/hackmes`: intentionally vulnerable programs designed for exploitation via crafted
+  malicious inputs. Refer to `/hackmes/README.md` for further guidance.
+
 ### Important notes
 
-Examples and exercises are designed to learn the basics of the C programming language,
-especially with respect to concepts such as pointers, addresses, and memory management.
+Everything in this repository, including all cryptographic and security primitives, is fundamentally
+insecure. This code is intended strictly for educational purposes.
 
-It goes without saying that anything available in this repository, including any cryptographic
-primitive, is highly insecure and only has educational value.
-
-### Setting up the project
+### Compiling the programs
 
 - Install any reasonably up-to-date C compiler.
     - **Windows:** [Visual Studio](https://visualstudio.microsoft.com) (for the MSVC compiler).

@@ -1,0 +1,24 @@
+1. The program is affected by an integer overflow vulnerability that leads to a buffer overflow.
+
+The problematic lines are:
+
+int len = user_input_int("User name length");
+if (len >= BUF_SIZE) { ... }
+
+Since `len` is a signed integer, we can input any negative value which will cause the size
+check to pass. The value will then be converted to an unsigned value when passed to the
+`user_input` function (which accepts a `size_t` parameter), causing it to underflow to
+a very large number. This in turn enables us to overflow the buffer by an arbitrary amount.
+
+The easiest fix is to change `len` to be of type `size_t`: if the user enters a negative value,
+it will underflow before the check and be caught by it, ending execution. A better fix would
+involve changing the `user_input_int` function to only accept and return unsigned integers.
+
+2. To call the shellcode function, we must first enter a negative value as the length,
+and then proceed to overflow the buffer as usual, overwriting the `fun` pointer.
+
+Example (shellcode: 0x104167d08)
+--------------------------------
+User name length: -1
+User name: 1234567890123456\08\7d\16\04\01
+You got shell!

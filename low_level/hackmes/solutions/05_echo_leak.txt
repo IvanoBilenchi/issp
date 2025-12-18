@@ -1,0 +1,20 @@
+1. The program is affected by an off-by-one vulnerability that leads to an out-of-bounds read.
+
+The problematic line is:
+
+user_input("Echo", data.buf, sizeof(data.buf));
+
+The last parameter should instead be `sizeof(data.buf) - 1` (16 bytes - the NULL terminator).
+Since the bounds check is off by one, this allows us to completely fill the buffer with
+non-NULL bytes, including the last one (which should be NULL). This will cause
+`printf("%s\n", data.buf)` to print bytes that are outside of the bounds of `buf`.
+
+2. To leak the secret string, we just need to fill the buffer with non-NULL bytes, including
+the last one. Since `data.secret` immediately follows `data.buf` in the memory layout of our
+program, this will cause `printf("%s\n", data.buf)` to start printing `buf`, and then continue
+into `secret`, stopping only when the NULL terminator of `secret` is encountered.
+
+Example
+-------
+Echo: ................
+................h7foogzg71ty3m

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.24)
 project(issp
         VERSION "0.1.0"
-        DESCRIPTION "Exercises and lab material for the ISSP course."
+        DESCRIPTION "Exercises and lab materials for the ISSP course."
         HOMEPAGE_URL "https://github.com/IvanoBilenchi/issp"
         LANGUAGES C)
 
@@ -9,7 +9,7 @@ project(issp
 
 set(ISSP_PROJECT_DIR "${CMAKE_CURRENT_LIST_DIR}")
 set(ISSP_EXAMPLES_DIR "${ISSP_PROJECT_DIR}/examples")
-set(ISSP_C_EXERCISES_DIR "${ISSP_PROJECT_DIR}/c_exercises")
+set(ISSP_C_EXERCISES_DIR "${ISSP_PROJECT_DIR}/exercises")
 set(ISSP_C_SOLUTIONS_DIR "${ISSP_C_EXERCISES_DIR}/solutions")
 set(ISSP_HACKMES_DIR "${ISSP_PROJECT_DIR}/hackmes")
 

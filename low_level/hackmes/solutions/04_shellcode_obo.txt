@@ -1,0 +1,25 @@
+1. The program is affected by a buffer overflow vulnerability (may also be considered an off-by-one).
+
+The problematic line is:
+
+user_input("User name", data.buf, sizeof(data.buf) + 1);
+
+The last parameter should instead be `sizeof(data.buf) - 1` (16 bytes - the NULL terminator).
+Since the bounds check is off by two, this allows us to overflow the buffer by 1 byte,
+writing within the bounds of the `fun` pointer.
+
+2. To call the shellcode function, we need to overwrite the `data.fun` function pointer with
+the address of the shellcode function. We are, however, only able to overwrite the least significant
+byte (LSB) of the pointer. The compiler will likely place the legitimate `greet` function at
+an address that is sufficiently close to that of the `shellcode` function, e.g.:
+
+greet:     0x100f677a8
+shellcode: 0x100f6778c
+
+Notice how the addresses only differ for the LSB. This enables us to redirect execution by filling
+the buffer and then overwriting a single byte of the `fun` pointer.
+
+Example (greet: 0x100f677a8, shellcode: 0x100f6778c)
+----------------------------------------------------
+User name: 1234567890123456\8c
+You got shell!

@@ -1,5 +1,6 @@
 #include "util.h"
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -52,34 +53,36 @@ void p_dlog_data(char const *prompt, unsigned char const *data, size_t size) {
     printf("(%zu bytes)\n", size);
 }
 
+static void copy_input(char *dest, char const *src, size_t length) {
+    for (size_t i = 0, j = 0; j < length; ++i, ++j) {
+        char const c = src[i];
+        if (c == '\n' || c == '\0') {
+            dest[j] = '\0';
+            break;
+        }
+        if (c == '\\') {
+            int read;
+            sscanf(src + i + 1, "%2hhx%n", dest + j, &read);
+            i += read;
+        } else {
+            dest[j] = c;
+        }
+    }
+}
+
 void user_input(char const *prompt, char *buf, size_t length) {
-    fflush(stdin);
     if (prompt) printf("%s: ", prompt);
 
     length = length > 1023 ? 1023 : length;
     size_t temp_size = (length * 3) + 1;
-    char *temp = calloc(temp_size, sizeof(char));
+    char *in_buf = calloc(temp_size, sizeof(char));
+    if (!in_buf) abort();
 
-    if (!fgets(temp, (int)temp_size, stdin)) {
-        free(temp);
-        return;
+    if (fgets(in_buf, (int)temp_size, stdin)) {
+        copy_input(buf, in_buf, length);
     }
 
-    size_t j = 0;
-    for (char *c = temp; *c && j < length; ++c, ++j) {
-        if (*c == '\n') {
-            buf[j] = '\0';
-        } else if (*c == '\\') {
-            int read;
-            sscanf(c + 1, "%2hhx%n", &buf[j], &read);
-            c += read;
-        } else {
-            buf[j] = *c;
-        }
-    }
-    if (j < length) buf[j] = '\0';
-
-    free(temp);
+    free(in_buf);
 }
 
 static int scan_int(int *n) {

@@ -26,6 +26,6 @@ within the comments at the top of its respective `.c` source file.
   the data and function layout, which may aid in your analysis.
 - User input can be provided as standard **ASCII text**. Alternatively,
   **individual bytes** can be specified by encoding each byte as a backslash
-  (`\`) followed by one or two hexadecimal characters.
+  (`\`) followed by two hexadecimal characters.
   > **Example:** 16 bytes made of 8 ASCII characters and 8 hex-encoded bytes:
-  > `abcdefgh\0\1\2\3\a0\b1\c2\d3`
+  > `abcdefgh\00\01\02\03\a0\b1\c2\d3`

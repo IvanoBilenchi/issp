@@ -25,8 +25,7 @@ int main(int argc, char *argv[]) {
     struct {
         char buf[BUF_SIZE];
         void (*fun)(char const *);
-    } data;
-    data.fun = greet;
+    } data = { .fun = greet };
     dlog_var(data);
 
     user_input("User name", data.buf, sizeof(data));

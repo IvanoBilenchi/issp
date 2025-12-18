@@ -1,0 +1,19 @@
+1. The program is affected by a buffer overflow vulnerability.
+
+The problematic line is:
+
+user_input("Password", data.buf, sizeof(data));
+
+The last parameter should instead be `sizeof(data.buf) - 1` (16 bytes - the NULL terminator).
+Since it is considering the size of the whole `data` struct (32 bytes), this allows us
+to overflow the buffer by 16 bytes, writing within the bounds of the `password` field.
+
+2. The instruction that is responsible for the authentication decision is
+`strcmp(data.buf, data.password) == 0`. To authenticate as the admin, we just have to
+set both `buf` and `password` to the same string, effectively allowing us to "choose"
+a password of our liking.
+
+Example
+-------
+Password: s3cr3tp4ssw0rd\00\00s3cr3tp4ssw0rd
+Welcome, admin!
