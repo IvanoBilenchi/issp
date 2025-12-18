@@ -8,21 +8,20 @@ High-level security exercises and lab materials for the
 
 - Install [Python](https://python.org) (3.12 or later).
 - Clone this repository (or download it as a zip):
-    ```
+    ```console
     git clone https://github.com/IvanoBilenchi/issp.git
     ```
 - Move into the `high_level` dir and create a new virtual environment:
-    ```
+    ```console
     cd issp/high_level
     python -m venv .venv
     ```
 - Activate the virtual environment:
-    ```
+    ```console
     Linux/macOS: source .venv/bin/activate
     Windows:     .venv\Scripts\activate
     ```
-
 - Install the library and its dependencies:
-    ```
+    ```console
     pip install -e .
     ```
