@@ -45,11 +45,22 @@ class Server(FileServer):
             "oppenheimer.mov": "This is an R-rated new movie.",
         }
 
-        # TO-DO: Add any necessary attributes.
+        self.subj: dict[str, dict[str, Any]] = {
+            "Bob": {"paying": True},
+            "Carl": {"age": 14, "paying": False},
+            "Diana": {"age": 15, "paying": True},
+            "Evan": {"age": 18},
+            "Frank": {"age": 25, "paying": True},
+        }
 
-        self.subj: dict[str, dict[str, Any]] = {}
-
-        self.obj: dict[str, dict[str, Any]] = {}
+        self.obj: dict[str, dict[str, Any]] = {
+            "toy_story.mov": {"rating": "G", "year": 1995},
+            "elemental.mov": {"rating": "G"},
+            "interstellar.mov": {"rating": "PG-13", "year": 2014},
+            "dune_2.mov": {"rating": "PG-13", "year": 2024},
+            "ex_machina.mov": {"year": 2014},
+            "oppenheimer.mov": {"rating": "R", "year": 2023},
+        }
 
         self.env = {
             "date": datetime.datetime.now(tz=datetime.UTC),

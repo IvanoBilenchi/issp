@@ -73,10 +73,8 @@ class Server(FileServer):
             return o.get("year", DEFAULT_MOVIE_YEAR) < NEW_MOVIE_YEAR or s.get("paying", False)
 
         def promo_rule(s: dict[str, Any], o: dict[str, Any], e: dict[str, Any]) -> bool:
-            cur_date: datetime.datetime = e["date"]
-            promo_start = datetime.datetime(cur_date.year, 12, 25, tzinfo=datetime.UTC)
-            promo_end = datetime.datetime(cur_date.year, 12, 31, tzinfo=datetime.UTC)
-            return promo_start <= cur_date <= promo_end
+            date: datetime.datetime = e["date"]
+            return date.month == 12 and 25 <= date.day <= 31
 
         def release_policy(s: dict[str, Any], o: dict[str, Any], e: dict[str, Any]) -> bool:
             return paying_rule(s, o, e) or promo_rule(s, o, e)
