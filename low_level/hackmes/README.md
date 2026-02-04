@@ -1,9 +1,9 @@
-# Vulnerable C Programs
+# 🪳 Vulnerable C Programs
 
 This folder contains a collection of **vulnerable C programs**.
 Each program accepts user input and executes a very simple functionality.
 
-### Instructions
+### 📌 Instructions
 
 Generally speaking, your goal is threefold:
 
@@ -16,7 +16,7 @@ Generally speaking, your goal is threefold:
 Specific instructions for analyzing and exploiting each program are provided
 within the comments at the top of its respective `.c` source file.
 
-### General Guidance
+### 📝 Additional notes
 
 - You can **ignore** all statements starting with `dlog_`; these are part
   of the internal debug logging system and are not relevant to the program's
