@@ -76,3 +76,4 @@ $RECYCLE.BIN/
 
 # Project-specific
 .vscode/
+/build
