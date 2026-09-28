@@ -17,7 +17,7 @@ def common_passwords() -> list[str]:
 
     :return: A list of common passwords.
     """
-    with (RES_DIR / "10-million-password-list-top-10000.txt").open() as f:
+    with (RES_DIR / "passwords.txt").open() as f:
         return f.read().splitlines()
 
 
