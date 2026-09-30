@@ -21,20 +21,20 @@ def decrypt(data: bytes, rsa_key: AsymmetricKey) -> bytes:
 
 
 def alice(channel: Channel, keychain: dict[str, AsymmetricKey], pri_key: AsymmetricKey) -> None:
-    msg = Message("Alice", "Bob", "Hello, Bob!")
-    log.info("[Alice] Encrypted: %s", msg)
+    msg = Message(to="Bob", body="Hello, Bob!")
+    log.info("Encrypted: %s", msg)
     # TO-DO: Create and send a digital envelope.
     channel.send(msg)
 
 
 def bob(channel: Channel, keychain: dict[str, AsymmetricKey], pri_key: AsymmetricKey) -> None:
-    msg = channel.receive("Bob")
+    msg = channel.receive()
     # TO-DO: Open the digital envelope.
-    log.info("[Bob] Decrypted: %s", msg)
+    log.info("Decrypted: %s", msg)
 
 
 def mallory(channel: Channel, keychain: dict[str, AsymmetricKey], pri_key: AsymmetricKey) -> None:
-    msg = channel.receive()
+    msg = channel.receive("*")
     new_body = b"Screw you, Bob!"
     # TO-DO: Tamper with the message.
     msg.body = new_body

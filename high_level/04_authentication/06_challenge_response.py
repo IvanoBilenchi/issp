@@ -13,15 +13,14 @@
 # - You can obtain a JSON representation of a message's body using the `json_dict()` method.
 # - Since passwords are salted, you need to return the salt along with the challenge.
 
-import os
 from typing import Any
 
-from issp import Actor, BankServer, Channel, Message, run_main, scrypt
+from issp import Actor, BankServer, Channel, Message, random_bytes, run_main, scrypt
 
 
 class Server(BankServer):
-    def __init__(self, name: str, channels: Channel | dict[str, Channel]) -> None:
-        super().__init__(name, channels)
+    def __init__(self, channels: Channel | dict[str, Channel]) -> None:
+        super().__init__(channels)
         self.add_handler("request_transaction", self._challenge, auth=False)
 
     def _challenge(self, sender: str, body: dict[str, Any]) -> dict[str, Any]:
@@ -33,7 +32,7 @@ class Server(BankServer):
             return False
 
         self.db[sender] = {
-            "salt": (salt := os.urandom(16)),
+            "salt": (salt := random_bytes(16)),
             "password": scrypt(body["password"], salt=salt),
             "balance": body["balance"],
         }
@@ -49,7 +48,7 @@ class Server(BankServer):
 
 
 def server(channel: Channel) -> None:
-    Server("Server", channel).listen()
+    Server(channel).listen()
 
 
 def alice(channel: Channel) -> None:
@@ -59,7 +58,7 @@ def alice(channel: Channel) -> None:
         "password": password,
         "balance": 100000.0,
     }
-    channel.request(Message("Alice", "Server", msg))
+    channel.request(Message(to="Server", body=msg))
 
     # TO-DO: Implement Alice's behavior according to the challenge-response protocol.
     msg = {
@@ -67,7 +66,7 @@ def alice(channel: Channel) -> None:
         "recipient": "Mallory",
         "amount": 1000.0,
     }
-    channel.request(Message("Alice", "Server", msg))
+    channel.request(Message(to="Server", body=msg))
 
 
 def mallory(channel: Channel) -> None:
@@ -76,7 +75,7 @@ def mallory(channel: Channel) -> None:
         "password": "s3cr3t",
         "balance": 1000.0,
     }
-    channel.request(Message("Mallory", "Server", message))
+    channel.request(Message(to="Server", body=message))
 
 
 def main() -> None:

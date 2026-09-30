@@ -173,4 +173,5 @@ poetry.toml
 pyrightconfig.json
 
 # Project-specific
+/AGENTS.md
 /fs/

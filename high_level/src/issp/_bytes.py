@@ -1,19 +1,19 @@
+import functools
 import itertools
 import sys
 from collections.abc import Iterable, Iterator, Sequence
 
 
-def xor(a: Iterable[int], b: Iterable[int]) -> bytes:
+def xor(*seqs: Iterable[int]) -> bytes:
     """
-    XOR two byte sequences.
+    XOR an arbitrary number of byte sequences.
 
-    If the sequences are of different lengths, the longer one is truncated.
+    If the sequences are of different lengths, the longer ones are truncated.
 
-    :param a: First byte sequence.
-    :param b: Second byte sequence.
-    :return: XOR of the two byte sequences.
+    :param seqs: Byte sequences to XOR.
+    :return: XOR of the byte sequences.
     """
-    return bytes(a_byte ^ b_byte for (a_byte, b_byte) in zip(a, b, strict=False))
+    return bytes(functools.reduce(lambda x, y: x ^ y, t) for t in zip(*seqs, strict=False))
 
 
 def byte_size(number: int) -> int:

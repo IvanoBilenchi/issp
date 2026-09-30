@@ -4,9 +4,18 @@
 # You must use both a stream cipher and an asymmetric cipher.
 
 
-import os
-
-from issp import RSA, Actor, AsymmetricKey, ChaCha20, Channel, Message, log, run_main, sha256
+from issp import (
+    RSA,
+    Actor,
+    AsymmetricKey,
+    ChaCha20,
+    Channel,
+    Message,
+    log,
+    random_bytes,
+    run_main,
+    sha256,
+)
 
 IV_SIZE = 16
 SIGNATURE_SIZE = 256
@@ -18,11 +27,11 @@ def alice(
     pri_key: AsymmetricKey,
     sym_key: bytes,
 ) -> None:
-    msg = Message("Alice", "Bob", "Hello, Bob!")
-    log.info("[Alice] Wants to send: %s", msg)
+    msg = Message(to="Bob", body="Hello, Bob!")
+    log.info("Wants to send: %s", msg)
 
     # Encrypt.
-    iv = os.urandom(IV_SIZE)
+    iv = random_bytes(IV_SIZE)
     msg.body = iv + ChaCha20(sym_key).encrypt(msg.body, iv=iv)
 
     # Sign.
@@ -39,7 +48,7 @@ def bob(
     pri_key: AsymmetricKey,
     sym_key: bytes,
 ) -> None:
-    msg = channel.receive("Bob")
+    msg = channel.receive()
 
     # Verify signature.
     signature = msg.body[:SIGNATURE_SIZE]
@@ -54,7 +63,7 @@ def bob(
     ciphertext = body[IV_SIZE:]
     msg.body = ChaCha20(sym_key).decrypt(ciphertext, iv=iv)
 
-    log.info("[Bob] Recovered: %s", msg)
+    log.info("Recovered: %s", msg)
 
 
 def mallory(channel: Channel) -> None:
@@ -65,7 +74,7 @@ def main() -> None:
     alice_pri_key, alice_pub_key = RSA.generate_key_pair()
     bob_pri_key, bob_pub_key = RSA.generate_key_pair()
     keychain = {"Alice": alice_pub_key, "Bob": bob_pub_key}
-    sym_key = os.urandom(32)
+    sym_key = random_bytes(32)
     Actor.start(
         Actor(alice, data=(keychain, alice_pri_key, sym_key)),
         Actor(bob, data=(keychain, bob_pri_key, sym_key)),

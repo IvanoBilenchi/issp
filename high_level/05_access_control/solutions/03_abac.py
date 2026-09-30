@@ -33,8 +33,8 @@ DEFAULT_RATING = "R"  # Default rating for movies.
 
 
 class Server(FileServer):
-    def __init__(self, name: str, channels: Channel | dict[str, Channel]) -> None:
-        super().__init__(name, channels)
+    def __init__(self, channels: Channel | dict[str, Channel]) -> None:
+        super().__init__(channels)
 
         self.files = {
             "toy_story.mov": "This is a G-rated old movie.",
@@ -95,10 +95,10 @@ class Server(FileServer):
 
 
 def server(channel: Channel) -> None:
-    Server("Server", channel).listen()
+    Server(channel).listen()
 
 
-def watch_all(actor: str, channel: Channel) -> None:
+def watch_all(channel: Channel) -> None:
     movies = (
         "toy_story.mov",
         "elemental.mov",
@@ -110,31 +110,31 @@ def watch_all(actor: str, channel: Channel) -> None:
 
     for path in movies:
         msg = {"action": "read", "path": path}
-        channel.request(Message(actor, "Server", msg), quiet=True)
+        channel.request(Message(to="Server", body=msg), quiet=True)
 
 
 def alice(channel: Channel) -> None:
-    watch_all("Alice", channel)
+    watch_all(channel)
 
 
 def bob(channel: Channel) -> None:
-    watch_all("Bob", channel)
+    watch_all(channel)
 
 
 def carl(channel: Channel) -> None:
-    watch_all("Carl", channel)
+    watch_all(channel)
 
 
 def diana(channel: Channel) -> None:
-    watch_all("Diana", channel)
+    watch_all(channel)
 
 
 def evan(channel: Channel) -> None:
-    watch_all("Evan", channel)
+    watch_all(channel)
 
 
 def frank(channel: Channel) -> None:
-    watch_all("Frank", channel)
+    watch_all(channel)
 
 
 def main() -> None:

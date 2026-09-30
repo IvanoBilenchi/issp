@@ -4,9 +4,8 @@
 # Implement the OTP encryption and decryption functions, and use them
 # to ensure the confidentiality of messages exchanged between Alice and Bob.
 
-import os
 
-from issp import Actor, Channel, Message, log, run_main
+from issp import Actor, Channel, Message, log, random_bytes, run_main
 
 
 def xor(a: bytes, b: bytes) -> bytes:
@@ -22,16 +21,16 @@ def decrypt(data: bytes, key: bytes) -> bytes:
 
 
 def alice(channel: Channel, key: bytes) -> None:
-    msg = Message("Alice", "Bob", "Hello, Bob!")
-    log.info("[Alice] Encrypted: %s", msg)
+    msg = Message(to="Bob", body="Hello, Bob!")
+    log.info("Encrypted: %s", msg)
     msg.body = encrypt(msg.body, key)
     channel.send(msg)
 
 
 def bob(channel: Channel, key: bytes) -> None:
-    msg = channel.receive("Bob")
+    msg = channel.receive()
     msg.body = decrypt(msg.body, key)
-    log.info("[Bob] Decrypted: %s", msg)
+    log.info("Decrypted: %s", msg)
 
 
 def mallory(channel: Channel) -> None:
@@ -39,7 +38,7 @@ def mallory(channel: Channel) -> None:
 
 
 def main() -> None:
-    key = os.urandom(16)
+    key = random_bytes(16)
     Actor.start(Actor(alice, data=(key,)), Actor(bob, data=(key,)), Actor(mallory, priority=1))
 
 

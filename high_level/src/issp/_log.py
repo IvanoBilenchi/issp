@@ -1,26 +1,64 @@
 from __future__ import annotations
 
+import contextlib
+import dataclasses
 import functools
 import logging
 import sys
+import threading
 from logging import CRITICAL, DEBUG, ERROR, INFO, WARNING
 from time import perf_counter_ns as tick
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Collection, Iterable, Iterator
+    from collections.abc import Callable, Collection, Generator, Iterable, Iterator
     from typing import Any
 
 
 _LOGGER = logging.getLogger("issp")
 
 
+class TagFamily:
+    @property
+    def width(self) -> int:
+        return self._width
+
+    def __init__(self, *names: str) -> None:
+        self._width = 0
+        self.register(*names)
+
+    def __call__(self, name: str) -> Tag:
+        self.register(name)
+        return Tag(self, name)
+
+    def register(self, *names: str) -> None:
+        self._width = max(self._width, max((len(name) for name in names), default=0))
+
+
+@dataclasses.dataclass(frozen=True)
+class Tag:
+    family: TagFamily
+    name: str
+
+    def __str__(self) -> str:
+        pad = max(self.family.width - len(self.name), 0)
+        left = pad // 2
+        return f"[{' ' * left}{self.name}{' ' * (pad - left)}]"
+
+
+class _Context(threading.local):
+    def __init__(self) -> None:
+        self.tags: list[Tag] = []
+
+
+_context = _Context()
+
+
 def _setup_logger() -> None:
     logging.addLevelName(WARNING, "WARN")
-    fmt = "[%(asctime)s] [%(name)s] [%(levelname)-5s] %(message)s"
-    datefmt = "%Y-%m-%d %H:%M:%S"
+    fmt = "[%(levelname)-5s] %(message)s"
     handler = logging.StreamHandler(sys.stdout)
-    handler.setFormatter(logging.Formatter(fmt, datefmt=datefmt))
+    handler.setFormatter(logging.Formatter(fmt))
     _LOGGER.addHandler(handler)
     _LOGGER.setLevel(logging.INFO)
 
@@ -36,32 +74,55 @@ def set_level(level: int | str) -> None:
     _LOGGER.setLevel(level)
 
 
+def is_enabled(level: int | str) -> bool:
+    return _LOGGER.isEnabledFor(_int_level(level))
+
+
+@contextlib.contextmanager
+def tagged(tag: Tag) -> Generator[None]:
+    _context.tags.append(tag)
+    try:
+        yield
+    finally:
+        _context.tags.pop()
+
+
 def with_level(level: int | str) -> Callable[[Any], Any] | None:
-    return functools.partial(log, level) if _LOGGER.isEnabledFor(_int_level(level)) else None
+    return functools.partial(log, level) if is_enabled(level) else None
 
 
-def log(level: int | str, msg: str, *args: object, **kwargs: object) -> None:
+def log(
+    level: int | str,
+    msg: str,
+    *args: object,
+    tag: Tag | None = None,
+    **kwargs: object,
+) -> None:
+    tags = [*_context.tags, tag] if tag else _context.tags
+    if tags:
+        prefix = " ".join(str(t) for t in tags)
+        msg = f"{prefix.replace('%', '%%') if args else prefix} {msg}"
     _LOGGER.log(_int_level(level), msg, *args, **kwargs)  # type: ignore[arg-type]
 
 
-def debug(msg: str, *args: object, **kwargs: object) -> None:
-    log(DEBUG, msg, *args, **kwargs)
+def debug(msg: str, *args: object, tag: Tag | None = None, **kwargs: object) -> None:
+    log(DEBUG, msg, *args, tag=tag, **kwargs)
 
 
-def info(msg: str, *args: object, **kwargs: object) -> None:
-    log(INFO, msg, *args, **kwargs)
+def info(msg: str, *args: object, tag: Tag | None = None, **kwargs: object) -> None:
+    log(INFO, msg, *args, tag=tag, **kwargs)
 
 
-def warning(msg: str, *args: object, **kwargs: object) -> None:
-    log(WARNING, msg, *args, **kwargs)
+def warning(msg: str, *args: object, tag: Tag | None = None, **kwargs: object) -> None:
+    log(WARNING, msg, *args, tag=tag, **kwargs)
 
 
-def error(msg: str, *args: object, **kwargs: object) -> None:
-    log(ERROR, msg, *args, **kwargs)
+def error(msg: str, *args: object, tag: Tag | None = None, **kwargs: object) -> None:
+    log(ERROR, msg, *args, tag=tag, **kwargs)
 
 
-def critical(msg: str, *args: object, **kwargs: object) -> None:
-    log(CRITICAL, msg, *args, **kwargs)
+def critical(msg: str, *args: object, tag: Tag | None = None, **kwargs: object) -> None:
+    log(CRITICAL, msg, *args, tag=tag, **kwargs)
 
 
 def _format_time(nanos: int) -> str:

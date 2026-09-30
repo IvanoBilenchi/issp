@@ -6,9 +6,7 @@
 # 1. Eavesdrop on the communication between Alice and Bob.
 # 2. Tamper with the message sent by Alice to Bob.
 
-import os
-
-from issp import Actor, Channel, Message, log, run_main, xor
+from issp import Actor, Channel, Message, log, random_bytes, run_main, xor
 
 
 def encrypt(data: bytes, key: bytes) -> bytes:
@@ -20,22 +18,22 @@ def decrypt(data: bytes, key: bytes) -> bytes:
 
 
 def alice(channel: Channel) -> None:
-    key = os.urandom(16)
-    channel.send(Message("Alice", "Bob", key))
+    key = random_bytes(16)
+    channel.send(Message(to="Bob", body=key))
 
-    msg = Message("Alice", "Bob", "Hello, Bob!")
-    log.info("[Alice] Encrypted: %s", msg)
+    msg = Message(to="Bob", body="Hello, Bob!")
+    log.info("Encrypted: %s", msg)
     msg.body = xor(msg.body, key)
     channel.send(msg)
 
 
 def bob(channel: Channel) -> None:
-    msg = channel.receive("Bob")
+    msg = channel.receive()
     key = msg.body
 
-    msg = channel.receive("Bob")
+    msg = channel.receive()
     msg.body = decrypt(msg.body, key)
-    log.info("[Bob] Decrypted: %s", msg)
+    log.info("Decrypted: %s", msg)
 
 
 def mallory(channel: Channel) -> None:
@@ -43,12 +41,12 @@ def mallory(channel: Channel) -> None:
     key = msg.body
     channel.wait()
 
-    msg = channel.receive()
+    msg = channel.receive("*")
     msg.body = decrypt(msg.body, key)
-    log.info("[Mallory] Decrypted: %s", msg)
+    log.info("Decrypted: %s", msg)
 
     msg.body = "Screw you, Bob!"
-    log.info("[Mallory] Encrypted: %s", msg)
+    log.info("Encrypted: %s", msg)
     msg.body = encrypt(msg.body, key)
     channel.send(msg)
 

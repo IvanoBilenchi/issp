@@ -19,8 +19,8 @@ DEFAULT_CLEARANCE = 0  # Unclassified
 
 
 class Server(FileServer):
-    def __init__(self, name: str, channels: Channel | dict[str, Channel]) -> None:
-        super().__init__(name, channels)
+    def __init__(self, channels: Channel | dict[str, Channel]) -> None:
+        super().__init__(channels)
 
         self.files = {
             "public.txt": "This is a public file.",
@@ -36,31 +36,31 @@ class Server(FileServer):
 
 
 def server(channel: Channel) -> None:
-    Server("Server", channel).listen()
+    Server(channel).listen()
 
 
-def write_read_all(actor: str, channel: Channel) -> None:
+def write_read_all(channel: Channel) -> None:
     files = ("public.txt", "confidential.txt", "secret.txt")
 
     for path in files:
-        msg = {"action": "write", "path": path, "data": f" Written by {actor}."}
-        channel.request(Message(actor, "Server", msg), quiet=True)
+        msg = {"action": "write", "path": path, "data": f" Written by {channel.actor_name}."}
+        channel.request(Message(to="Server", body=msg), quiet=True)
 
     for path in files:
         msg = {"action": "read", "path": path}
-        channel.request(Message(actor, "Server", msg), quiet=True)
+        channel.request(Message(to="Server", body=msg), quiet=True)
 
 
 def alice(channel: Channel) -> None:
-    write_read_all("Alice", channel)
+    write_read_all(channel)
 
 
 def bob(channel: Channel) -> None:
-    write_read_all("Bob", channel)
+    write_read_all(channel)
 
 
 def carl(channel: Channel) -> None:
-    write_read_all("Carl", channel)
+    write_read_all(channel)
 
 
 def main() -> None:

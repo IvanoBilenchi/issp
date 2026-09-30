@@ -13,34 +13,34 @@ from issp import RSA, Actor, Channel, Message, Signature, run_main
 def alice(channel: Channel) -> None:
     # Key exchange.
     pri_key, pub_key = RSA.generate_key_pair()
-    channel.send(Message("Alice", "Bob", pub_key.key_bytes))
+    channel.send(Message(to="Bob", body=pub_key.key_bytes))
 
     # Secure channel setup.
     channel = channel.with_stack(Signature(pri_key))
-    channel.send(Message("Alice", "Bob", "Hello, Bob!"))
+    channel.send(Message(to="Bob", body="Hello, Bob!"))
 
 
 def bob(channel: Channel) -> None:
     # Key exchange.
-    msg = channel.receive("Bob")
+    msg = channel.receive()
     alice_pub_key = RSA.load_public_key(msg.body)
 
     # Secure channel setup.
     channel = channel.with_stack(Signature(alice_pub_key))
-    channel.receive("Bob")
+    channel.receive()
 
 
 def mallory(channel: Channel) -> None:
     pri_key, pub_key = RSA.generate_key_pair()
-    channel.receive()
-    channel.send(Message("Alice", "Bob", pub_key.key_bytes))
+    channel.receive("*")
+    channel.send(Message(to="Bob", body=pub_key.key_bytes, sender="Alice"))
 
     # Optional: wait for Alice's message and discard it before sending her own.
     channel.wait()
-    channel.receive()
+    channel.receive("*")
 
     channel = channel.with_stack(Signature(pri_key))
-    channel.send(Message("Alice", "Bob", "Screw you, Bob!"))
+    channel.send(Message(to="Bob", body="Screw you, Bob!", sender="Alice"))
 
 
 def main() -> None:

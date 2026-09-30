@@ -26,32 +26,32 @@ def verify(data: bytes, signature: bytes, key: AsymmetricKey) -> bool:
 
 
 def alice(channel: Channel, keychain: dict[str, AsymmetricKey], pri_key: AsymmetricKey) -> None:
-    msg = Message("Alice", "Bob", "Hello, Bob!")
-    log.info("[Alice] Wants to send: %s", msg)
+    msg = Message(to="Bob", body="Hello, Bob!")
+    log.info("Wants to send: %s", msg)
     msg.body = compute_signature(msg.body, pri_key) + msg.body
     channel.send(msg)
 
 
 def bob(channel: Channel, keychain: dict[str, AsymmetricKey], pri_key: AsymmetricKey) -> None:
-    msg = channel.receive("Bob")
+    msg = channel.receive()
     body = msg.body[SIGNATURE_SIZE:]
     signature = msg.body[:SIGNATURE_SIZE]
     key = keychain[msg.sender]
     if verify(body, signature, key):
-        log.info("[Bob] Signature verification succeeded!")
+        log.info("Signature verification succeeded!")
     else:
-        log.warning("[Bob] Signature verification failed!")
+        log.warning("Signature verification failed!")
 
 
 def mallory(channel: Channel, keychain: dict[str, AsymmetricKey], pri_key: AsymmetricKey) -> None:
-    # Toggle this variable to see the difference between eavesdropping and tampering.
+    # Toggle this variable to switch between eavesdropping and tampering.
     tamper = False
 
     if not tamper:
         channel.peek()
         return
 
-    msg = channel.receive()
+    msg = channel.receive("*")
     msg.body = msg.body[:SIGNATURE_SIZE] + b"Screw you, Bob!"
     channel.send(msg)
 

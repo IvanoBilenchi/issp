@@ -19,12 +19,7 @@ class Handler:
 
 
 class Server:
-    def __init__(
-        self,
-        name: str,
-        channels: Channel | dict[str, Channel],
-    ) -> None:
-        self.name = name
+    def __init__(self, channels: Channel | dict[str, Channel]) -> None:
         self._handlers: dict[str, Handler] = {}
 
         if isinstance(channels, Channel):
@@ -34,6 +29,7 @@ class Server:
             self.plain = next(iter(channels.values())).with_stack(Plaintext())
             self.channels = channels
 
+        self.name = self.plain.actor_name
         self.add_handler("register", self._register, auth=False)
 
     def register(self, sender: str, body: dict[str, Any]) -> bool:
@@ -49,22 +45,22 @@ class Server:
         self._handlers[action] = Handler(handler, auth=auth)
 
     def listen(self) -> None:
-        log.info("[%s] Listening...", self.name)
+        log.info("Listening...")
         while msg := self._receive():
             sender, channel, body = self._decode(msg)
             response = self._handle(sender, body)
-            channel.send(Message(self.name, sender, response))
+            channel.send(Message(to=sender, body=response))
 
     def _register(self, sender: str, body: dict[str, Any]) -> dict[str, Any]:
         return {"status": "success" if self.register(sender, body) else "failure"}
 
     def _receive(self) -> Message:
-        return self.plain.receive(self.name, timeout=10.0, quiet=True)
+        return self.plain.receive(timeout=10.0, quiet=True)
 
     def _decode(self, msg: Message) -> tuple[str, Channel, dict[str, Any]]:
         channel = self.channels.get(msg.sender, self.plain)
         msg = channel.stack.decode(msg)
-        log.info("[%s] Received: %s", self.name, msg)
+        log.info("Received: %s", msg)
         return msg.sender, channel, msg.json_dict()
 
     def _handle(self, sender: str, body: dict[str, Any]) -> dict[str, Any]:
@@ -80,7 +76,7 @@ class Server:
                     return response | {"status": "authorization failure"}
             return response | handler(sender, body)
         except Exception as e:
-            log.warning("[%s] %s", self.name, e)
+            log.warning("%s", e)
             return response | {"status": "error"}
 
 
@@ -89,8 +85,8 @@ class BankServer(Server):
         del sender, body  # Unused
         return True
 
-    def __init__(self, name: str, channels: Channel | dict[str, Channel]) -> None:
-        super().__init__(name, channels)
+    def __init__(self, channels: Channel | dict[str, Channel]) -> None:
+        super().__init__(channels)
         self.db: dict[str, dict[str, Any]] = {}
         self.add_handler("perform_transaction", self._perform_transaction)
 
@@ -109,18 +105,14 @@ class BankServer(Server):
         user_record["balance"] -= amount
         recipient_record["balance"] += amount
 
-        log.info(
-            "[%s] Current balances: %s",
-            self.name,
-            {k: v["balance"] for k, v in self.db.items()},
-        )
+        log.info("Current balances: %s", {k: v["balance"] for k, v in self.db.items()})
 
         return {"status": "success", "recipient": recipient, "amount": amount}
 
 
 class FileServer(Server):
-    def __init__(self, name: str, channels: Channel | dict[str, Channel]) -> None:
-        super().__init__(name, channels)
+    def __init__(self, channels: Channel | dict[str, Channel]) -> None:
+        super().__init__(channels)
         self.files: dict[str, str] = {}
         self.add_handler("read", self._read)
         self.add_handler("write", self._write)

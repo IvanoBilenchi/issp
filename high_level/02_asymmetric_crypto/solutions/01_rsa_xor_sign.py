@@ -31,15 +31,15 @@ class XOR8(Hash):
 
 
 def alice(channel: Channel) -> None:
-    channel.send(Message("Alice", "Bob", "Hello, Bob!"))
+    channel.send(Message(to="Bob", body="Hello, Bob!"))
 
 
 def bob(channel: Channel) -> None:
-    channel.receive("Bob")
+    channel.receive()
 
 
 def mallory(channel: Channel) -> None:
-    msg = channel.receive()
+    msg = channel.receive("*")
     new_body = b"Screw you, Bob!"
     new_body = zero_pad(new_body, XOR8.CODE_SIZE)
 

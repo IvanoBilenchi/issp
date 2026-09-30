@@ -20,31 +20,31 @@ def verify(data: bytes, digest: bytes) -> bool:
 
 
 def alice(channel: Channel) -> None:
-    msg = Message("Alice", "Bob", "Hello, Bob!")
-    log.info("[Alice] Wants to send: %s", msg)
+    msg = Message(to="Bob", body="Hello, Bob!")
+    log.info("Wants to send: %s", msg)
     msg.body = sha256(msg.body) + msg.body
     channel.send(msg)
 
 
 def bob(channel: Channel) -> None:
-    msg = channel.receive("Bob")
+    msg = channel.receive()
     body = msg.body[DIGEST_SIZE:]
     digest = msg.body[:DIGEST_SIZE]
     if verify(body, digest):
-        log.info("[Bob] Message integrity check succeeded!")
+        log.info("Message integrity check succeeded!")
     else:
-        log.warning("[Bob] Message integrity check failed!")
+        log.warning("Message integrity check failed!")
 
 
 def mallory(channel: Channel) -> None:
-    # Toggle this variable to see the difference between eavesdropping and tampering.
+    # Toggle this variable to switch between eavesdropping and tampering.
     tamper = False
 
     if not tamper:
         channel.peek()
         return
 
-    msg = channel.receive()
+    msg = channel.receive("*")
     body = b"Screw you, Bob!"
     msg.body = sha256(body) + body
     channel.send(msg)

@@ -1,4 +1,3 @@
-import os
 import random
 import string
 from collections.abc import Callable
@@ -7,7 +6,7 @@ from functools import cache
 from . import _log as log
 from ._config import RES_DIR
 from ._hash import scrypt
-from ._rng import random_choice, random_int, random_string
+from ._random import random_bytes, random_choice, random_int, random_string
 
 
 @cache
@@ -76,7 +75,7 @@ def generate_password_database(
         log.info("Generating password database...")
         for data in log.percent(pass_dict.values()):
             if salt_length > 0:
-                salt = os.urandom(16)
+                salt = random_bytes(16)
                 data["salt"] = salt
             else:
                 salt = None

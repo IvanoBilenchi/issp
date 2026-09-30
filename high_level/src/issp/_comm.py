@@ -7,7 +7,7 @@ import threading
 import time
 from typing import TYPE_CHECKING
 
-from . import _log as log
+from . import _actor, _log as log
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
@@ -62,7 +62,7 @@ class Message:
 
         :return: An empty message instance.
         """
-        return cls("", "", b"")
+        return cls("", b"", sender="")
 
     @property
     def is_empty(self) -> bool:
@@ -71,7 +71,37 @@ class Message:
 
         :return: True if the message is empty, False otherwise.
         """
-        return not (self.sender or self.recipient or self.body)
+        return not (self._sender or self.recipient or self.body)
+
+    @property
+    def sender(self) -> str:
+        """
+        The sender of the message.
+
+        :raises ValueError: If the message has no sender.
+        """
+        if self._sender is None:
+            err_msg = "Message has no sender"
+            raise ValueError(err_msg)
+        return self._sender
+
+    @sender.setter
+    def sender(self, value: str) -> None:
+        """
+        Set the sender of the message.
+
+        :param value: The new sender of the message.
+        """
+        self._sender = value
+
+    @property
+    def has_sender(self) -> bool:
+        """
+        Check if the message has a sender.
+
+        :return: True if the message has a sender, False otherwise.
+        """
+        return self._sender is not None
 
     @property
     def body(self) -> bytes:
@@ -87,23 +117,24 @@ class Message:
         """
         self._body = self.encode_body(value)
 
-    def __init__(self, sender: str, recipient: str, body: Body) -> None:
+    def __init__(self, to: str, body: Body, *, sender: str | None = None) -> None:
         """
         Initialize a message.
 
-        :param sender: The sender of the message.
-        :param recipient: The recipient of the message.
+        :param to: The recipient of the message.
         :param body: The body of the message.
+        :param sender: The sender of the message. If None, it is set to the name
+                       of the actor that sends the message.
         """
-        self.sender = sender
-        """The sender of the message."""
-        self.recipient = recipient
+        self._sender = sender
+        self.recipient = to
         """The recipient of the message."""
         self.body = body
 
     def __repr__(self) -> str:
         body = self.decode_body(self.body)
-        return f"Message(from={self.sender!r}, to={self.recipient!r}, body={body!r})"
+        sender = "" if self._sender is None else f"from={self._sender!r}, "
+        return f"Message({sender}to={self.recipient!r}, body={body!r})"
 
     def __bool__(self) -> bool:
         return not self.is_empty
@@ -115,7 +146,8 @@ class Message:
         :param body: The new body for the copied message. If None, the original body is used.
         :return: A new message instance.
         """
-        return Message(self.sender, self.recipient, body or self.body)
+        body = self.body if body is None else body
+        return Message(self.recipient, body, sender=self._sender)
 
     def json_dict(self) -> dict[str, Any]:
         """
@@ -159,6 +191,21 @@ class Channel:
         messages are not received.
     """
 
+    ANY = "*"
+    """Recipient placeholder that matches any message."""
+
+    @property
+    def actor_name(self) -> str:
+        """
+        The name of the actor using this channel.
+
+        :raises RuntimeError: If the channel is used outside of an actor thread.
+        """
+        if (name := _actor.current()) is None:
+            err_msg = "Channel used outside of an actor thread"
+            raise RuntimeError(err_msg)
+        return name
+
     @property
     def stack(self) -> Stack:
         """The security stack applied to messages sent and received through this channel."""
@@ -166,14 +213,12 @@ class Channel:
 
     def __init__(
         self,
-        name: str,
         medium: Medium,
         stack: Layer,
         priority: int = 0,
     ) -> None:
         self._stack = Stack(stack)
         self._medium = medium
-        self._name = name
         self._priority = priority
         self._request_no = 0
 
@@ -191,11 +236,12 @@ class Channel:
         """
         Send a message through the communication medium.
 
-        :param msg: The message to be sent.
+        :param msg: The message to be sent. If it has no sender, it is set to the actor name.
         :param priority: The priority level for writing to the medium.
                          If None, an instance-specific default priority is used.
         :param timeout: The maximum time to wait for a message, in seconds.
         """
+        msg = self._stamped(msg)
         try:
             enc_msg = self.stack.encode(msg.copy())
             self._medium.write(enc_msg, self._get_priority(priority), timeout=timeout)
@@ -219,14 +265,19 @@ class Channel:
         After calling this method, the message is removed from the medium.
         If you wish to read a message without removing it, consider using the `peek` method instead.
 
-        :param recipient: The intended recipient of the message.
-                          If None, any message can be received.
+        :param recipient: The intended recipient of the message. If None, only messages
+                          addressed to the actor using this channel are received.
+                          If "*", any message can be received.
         :param priority: The priority level for reading from the medium.
                          If None, an instance-specific default priority is used.
         :param timeout: The maximum time to wait for a message, in seconds.
         :return: The received message.
         """
         try:
+            if recipient is None:
+                recipient = self.actor_name
+            elif recipient == Channel.ANY:
+                recipient = None
             msg = self._medium.read(recipient, self._get_priority(priority), timeout=timeout)
             msg = self.stack.decode(msg)
         except Exception as e:
@@ -275,14 +326,15 @@ class Channel:
         """
         Send a message and wait for a response.
 
-        :param msg: The message to be sent.
+        :param msg: The message to be sent. If it has no sender, it is set to the actor name.
         :param priority: The priority level for writing to and reading from the medium.
                          If None, an instance-specific default priority is used.
         :param timeout: The maximum time to wait for a response, in seconds.
         :return: The received response message.
         """
         self.send(msg, priority=priority, timeout=timeout, quiet=quiet)
-        return self.receive(msg.sender, priority=priority, timeout=timeout, quiet=quiet)
+        sender = self._sender_of(msg)
+        return self.receive(sender, priority=priority, timeout=timeout, quiet=quiet)
 
     def wait(self, ticks: int = 1) -> None:
         """
@@ -309,13 +361,21 @@ class Channel:
         :param stack: The new security stack.
         :return: New channel instance.
         """
-        return Channel(self._name, self._medium, stack, self._priority)
+        return Channel(self._medium, stack, self._priority)
+
+    def _sender_of(self, msg: Message) -> str:
+        return msg.sender if msg.has_sender else self.actor_name
+
+    def _stamped(self, msg: Message) -> Message:
+        stamped = msg.copy()
+        stamped.sender = self._sender_of(msg)
+        return stamped
 
     def _log_msg(self, prefix: str, msg: Message) -> None:
-        log.info("[%s] %s: %s", self._name, prefix, msg)
+        log.info("%s: %s", prefix, msg)
 
     def _log_exception(self, e: Exception) -> None:
-        log.warning("[%s] %s", self._name, e)
+        log.warning("%s", e)
 
 
 class Layer:
@@ -407,13 +467,19 @@ class Stack(Layer):
 
 
 class Actor:
+    TAGS = log.TagFamily()
+    """The log tag family of actors, which also includes the medium."""
+
     @staticmethod
     def start(*args: Actor, interval: float = 1.0) -> None:
+        Actor.TAGS.register(*(a.name for a in args))
+        if log.is_enabled(log.DEBUG):
+            Actor.TAGS.register(Medium.NAME)
         medium = Medium(interval=interval)
         threads: list[threading.Thread] = []
         for a in args:
-            channels = tuple(Channel(a.name, medium, s, a.priority) for s in a.stacks)
-            thread = threading.Thread(target=a.target, args=(*channels, *a.data), daemon=True)
+            channels = tuple(Channel(medium, s, a.priority) for s in a.stacks)
+            thread = threading.Thread(target=a.run, args=(*channels, *a.data), daemon=True)
             threads.append(thread)
             thread.start()
         for t in threads:
@@ -432,6 +498,10 @@ class Actor:
         self.priority = priority
         self.stacks = (Plaintext(),) if stacks is None else stacks
         self.data = () if data is None else data
+
+    def run(self, *args: object) -> None:
+        with _actor.acting_as(self.name), log.tagged(Actor.TAGS(self.name)):
+            self.target(*args)
 
 
 class Event:
@@ -455,8 +525,11 @@ class Event:
 
 
 class EventQueue:
+    TAGS = log.TagFamily()
+
     def __init__(self, name: str) -> None:
         self.name = name
+        self.tag = EventQueue.TAGS(name)
         self._queue: list[Event] = []
         self._dummy = Event(0)
         self.token: str | None = None
@@ -482,7 +555,7 @@ class EventQueue:
         timeout: float | None = None,
     ) -> None:
         event = Event(priority, token)
-        log.debug("[%s] Enqueued: %s", self.name, event)
+        log.debug("Enqueued: %s", event, tag=self.tag)
         self._queue.append(event)
         event.wait(timeout)
 
@@ -490,7 +563,7 @@ class EventQueue:
         i, event = self._next()
         if event is self._dummy:
             return
-        log.debug("[%s] Dequeued: %s (%d)", self.name, event, i)
+        log.debug("Dequeued: %s (%d)", event, i, tag=self.tag)
         if event.token != Event.PEEK_TOKEN:
             self.token = None
         del self._queue[i]
@@ -502,6 +575,8 @@ class EventQueue:
 
 
 class Medium:
+    NAME = "Medium"
+
     @property
     def interval(self) -> float:
         return self._interval
@@ -515,9 +590,13 @@ class Medium:
         threading.Thread(target=self._tick, daemon=True).start()
 
     def _tick(self) -> None:
+        with log.tagged(Actor.TAGS(Medium.NAME)):
+            self._tick_loop()
+
+    def _tick_loop(self) -> None:
         for i in itertools.count(start=1):
             time.sleep(self._interval)
-            log.debug("[Medium] Tick %d", i)
+            log.debug("Tick %d", i)
             if len(self._write_queue) and self._read_queue.token is None:
                 self._write_queue.dequeue()
                 time.sleep(self._interval)
@@ -547,7 +626,7 @@ class Medium:
     def write(self, msg: Message, priority: int, *, timeout: float | None = None) -> None:
         self._write_queue.enqueue(priority=priority, timeout=timeout)
         self._read_queue.token = msg.recipient
-        self._msg = msg.copy()
+        self._msg = msg
 
     def wait(self, turns: int = 1) -> None:
         for _ in range(turns):

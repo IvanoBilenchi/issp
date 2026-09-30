@@ -15,13 +15,13 @@ from issp import HMAC, Actor, Channel, Message, log, run_main
 
 
 def alice(channel: Channel) -> None:
-    channel.send(Message("Alice", "Bob", "Hello, Bob!"))
-    channel.send(Message("Alice", "Bob", "How are you?"))
+    channel.send(Message(to="Bob", body="Hello, Bob!"))
+    channel.send(Message(to="Bob", body="How are you?"))
 
 
 def bob(channel: Channel) -> None:
-    channel.receive("Bob")
-    channel.receive("Bob")
+    channel.receive()
+    channel.receive()
 
 
 def mallory(channel: Channel) -> None:
@@ -29,8 +29,8 @@ def mallory(channel: Channel) -> None:
     # TO-DO: Brute-force the key by trying all possible 4-digit PINs.
     channel.wait()
 
-    msg = channel.receive()
-    msg.body = "Screw you, Bob!"
+    msg = channel.receive("*")
+    msg.body = "Screw you!"
     # TO-DO: Prepend the correct HMAC to the tampered message.
     channel.send(msg)
 

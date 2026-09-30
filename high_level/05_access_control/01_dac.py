@@ -18,8 +18,8 @@ ASSIGNABLE_PERMISSIONS = {"read", "write"}  # Permissions that can be assigned
 
 
 class Server(FileServer):
-    def __init__(self, name: str, channels: Channel | dict[str, Channel]) -> None:
-        super().__init__(name, channels)
+    def __init__(self, channels: Channel | dict[str, Channel]) -> None:
+        super().__init__(channels)
         self.add_handler("set_permissions", self.set_permissions)
 
         self.files = {
@@ -40,23 +40,23 @@ class Server(FileServer):
 
 
 def server(channel: Channel) -> None:
-    Server("Server", channel).listen()
+    Server(channel).listen()
 
 
-def write_read_all(actor: str, channel: Channel) -> None:
+def write_read_all(channel: Channel) -> None:
     files = ("file_a.txt", "file_b.txt", "file_c.txt")
 
     for path in files:
-        msg = {"action": "write", "path": path, "data": f" Written by {actor}."}
-        channel.request(Message(actor, "Server", msg), quiet=True)
+        msg = {"action": "write", "path": path, "data": f" Written by {channel.actor_name}."}
+        channel.request(Message(to="Server", body=msg), quiet=True)
 
     for path in files:
         msg = {"action": "read", "path": path}
-        channel.request(Message(actor, "Server", msg), quiet=True)
+        channel.request(Message(to="Server", body=msg), quiet=True)
 
 
 def alice(channel: Channel) -> None:
-    write_read_all("Alice", channel)
+    write_read_all(channel)
 
     for path in ("file_a.txt", "file_b.txt", "file_c.txt"):
         msg = {
@@ -65,7 +65,7 @@ def alice(channel: Channel) -> None:
             "target": "Bob",
             "permissions": ["write"],
         }
-        channel.request(Message("Alice", "Server", msg), quiet=True)
+        channel.request(Message(to="Server", body=msg), quiet=True)
 
     for path in ("file_a.txt", "file_b.txt", "file_c.txt"):
         msg = {
@@ -74,15 +74,15 @@ def alice(channel: Channel) -> None:
             "target": "Carl",
             "permissions": ["read"],
         }
-        channel.request(Message("Alice", "Server", msg), quiet=True)
+        channel.request(Message(to="Server", body=msg), quiet=True)
 
 
 def bob(channel: Channel) -> None:
-    write_read_all("Bob", channel)
+    write_read_all(channel)
 
 
 def carl(channel: Channel) -> None:
-    write_read_all("Carl", channel)
+    write_read_all(channel)
 
 
 def main() -> None:

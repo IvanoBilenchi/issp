@@ -14,11 +14,21 @@
 # - The starting point for this exercise is the solution to the "naive authentication"
 #   exercise. You will need to fix the replay vulnerability by adding TOTP-based authentication.
 
-import os
 import time
 from typing import Any
 
-from issp import HMAC, RNG, SHA1, Actor, BankServer, Channel, Message, run_main, scrypt
+from issp import (
+    HMAC,
+    RNG,
+    SHA1,
+    Actor,
+    BankServer,
+    Channel,
+    Message,
+    random_bytes,
+    run_main,
+    scrypt,
+)
 
 
 class TOTP(RNG[int]):
@@ -45,7 +55,7 @@ class Server(BankServer):
             return False
 
         self.db[sender] = {
-            "salt": (salt := os.urandom(16)),
+            "salt": (salt := random_bytes(16)),
             "password": scrypt(body["password"], salt=salt),
             "otp": TOTP(body["otp_key"]),
             "balance": body["balance"],
@@ -71,12 +81,12 @@ class Server(BankServer):
 
 
 def server(channel: Channel) -> None:
-    Server("Server", channel).listen()
+    Server(channel).listen()
 
 
 def alice(channel: Channel) -> None:
     password = "p4ssw0rd"
-    otp_key = os.urandom(16)
+    otp_key = random_bytes(16)
     otp = TOTP(otp_key)
     message = {
         "action": "register",
@@ -84,7 +94,7 @@ def alice(channel: Channel) -> None:
         "otp_key": otp_key,
         "balance": 100000.0,
     }
-    channel.request(Message("Alice", "Server", message))
+    channel.request(Message(to="Server", body=message))
 
     message = {
         "action": "perform_transaction",
@@ -93,17 +103,17 @@ def alice(channel: Channel) -> None:
         "recipient": "Mallory",
         "amount": 1000.0,
     }
-    channel.request(Message("Alice", "Server", message))
+    channel.request(Message(to="Server", body=message))
 
 
 def mallory(channel: Channel) -> None:
     message = {
         "action": "register",
         "password": "s3cr3t",
-        "otp_key": os.urandom(16),
+        "otp_key": random_bytes(16),
         "balance": 1000.0,
     }
-    channel.request(Message("Mallory", "Server", message))
+    channel.request(Message(to="Server", body=message))
 
     channel.wait(2)
     msg = channel.peek()

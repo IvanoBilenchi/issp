@@ -2,16 +2,18 @@
 # They decide to use a Message Authentication Code (MAC) to ensure their authenticity and integrity.
 # Mallory is an attacker who has access to the communication channel between Alice and Bob.
 #
-# Implement message authenticity checking using a combination of SHA-256 and ChaCha20.
+# Your task is to:
+# 1. Implement message authenticity checking using a combination of SHA-256 and ChaCha20.
+# 2. Allow Mallory to forge an arbitrary message that passes Bob's authenticity check.
 #
 # Hints:
 # - You can use the `ChaCha20` class from the `issp` module.
 # - The MAC should consist of a random 16-byte IV followed by an encrypted SHA-256 digest.
+# - Refer to the lecture slides for details on how to forge an arbitrary message when the MAC
+#   is based on a stream cipher.
 
 
-import os
-
-from issp import Actor, Channel, Message, log, run_main
+from issp import Actor, Channel, Message, log, random_bytes, run_main
 
 DIGEST_SIZE = 32
 IV_SIZE = 16
@@ -29,38 +31,39 @@ def verify(data: bytes, mac: bytes, key: bytes) -> bool:
 
 
 def alice(channel: Channel, key: bytes) -> None:
-    msg = Message("Alice", "Bob", "Hello, Bob!")
-    log.info("[Alice] Wants to send: %s", msg)
+    msg = Message(to="Bob", body="Hello, Bob!")
+    log.info("Wants to send: %s", msg)
     # TO-DO: Compute the MAC and prepend it to the message.
     channel.send(msg)
 
 
 def bob(channel: Channel, key: bytes) -> None:
-    msg = channel.receive("Bob")
+    msg = channel.receive()
     # TO-DO: Correctly separate the message body and the MAC.
     body = msg.body
     mac = b""
     if verify(body, mac, key):
-        log.info("[Bob] Message authentication check succeeded!")
+        log.info("Message authentication check succeeded!")
     else:
-        log.warning("[Bob] Message authentication check failed!")
+        log.warning("Message authentication check failed!")
 
 
 def mallory(channel: Channel) -> None:
-    # Toggle this variable to see the difference between eavesdropping and tampering.
+    # Toggle this variable to switch between eavesdropping and tampering.
     tamper = False
 
     if not tamper:
         channel.peek()
         return
 
-    msg = channel.receive()
+    # TO-DO: Improve Mallory's tampering attempt.
+    msg = channel.receive("*")
     msg.body = msg.body[:MAC_SIZE] + b"Screw you, Bob!"
     channel.send(msg)
 
 
 def main() -> None:
-    key = os.urandom(32)
+    key = random_bytes(32)
     Actor.start(Actor(alice, data=(key,)), Actor(bob, data=(key,)), Actor(mallory, priority=1))
 
 

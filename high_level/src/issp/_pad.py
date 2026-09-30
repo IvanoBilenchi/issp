@@ -1,6 +1,3 @@
-from cryptography.hazmat.primitives import padding
-
-
 def zero_pad(data: bytes, size: int) -> bytes:
     """
     Pad data with zero bytes to a multiple of the given size.
@@ -31,8 +28,8 @@ def pkcs7_pad(data: bytes, size: int) -> bytes:
     :param size: Block size in bytes.
     :return: Padded data.
     """
-    padder = padding.PKCS7(size * 8).padder()
-    return padder.update(data) + padder.finalize()
+    pad = size - len(data) % size
+    return data + bytes([pad] * pad)
 
 
 def pkcs7_unpad(data: bytes, size: int) -> bytes:
@@ -43,8 +40,11 @@ def pkcs7_unpad(data: bytes, size: int) -> bytes:
     :param size: Block size in bytes.
     :return: Unpadded data.
     """
-    unpadder = padding.PKCS7(size * 8).unpadder()
-    return unpadder.update(data) + unpadder.finalize()
+    pad = data[-1] if data else 0
+    if len(data) % size or not 0 < pad <= size or data[-pad:] != bytes([pad] * pad):
+        err_msg = "Invalid padding"
+        raise ValueError(err_msg)
+    return data[:-pad]
 
 
 def pkcs1v15_unpad(data: bytes) -> bytes:

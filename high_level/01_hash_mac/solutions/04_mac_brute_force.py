@@ -15,13 +15,13 @@ from issp import HMAC, Actor, Channel, Message, generate_bytes, log, run_main
 
 
 def alice(channel: Channel) -> None:
-    channel.send(Message("Alice", "Bob", "Hello, Bob!"))
-    channel.send(Message("Alice", "Bob", "How are you?"))
+    channel.send(Message(to="Bob", body="Hello, Bob!"))
+    channel.send(Message(to="Bob", body="How are you?"))
 
 
 def bob(channel: Channel) -> None:
-    channel.receive("Bob")
-    channel.receive("Bob")
+    channel.receive()
+    channel.receive()
 
 
 def mallory(channel: Channel) -> None:
@@ -33,12 +33,12 @@ def mallory(channel: Channel) -> None:
     for key in generate_bytes(length=4, charset="0123456789"):
         hmac.key = key
         if hmac.compute_code(body) == existing_mac:
-            log.info("[Mallory] Found key: %s", key)
+            log.info("Found key: %s", key)
             break
     channel.wait()
 
-    msg = channel.receive()
-    msg.body = "Screw you, Bob!"
+    msg = channel.receive("*")
+    msg.body = "Screw you!"
     msg.body = hmac.compute_code(msg.body) + msg.body
     channel.send(msg)
 

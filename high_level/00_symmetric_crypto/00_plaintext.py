@@ -14,12 +14,12 @@ from issp import Actor, Channel, Message, run_main
 
 
 def alice(channel: Channel) -> None:
-    msg = Message("Alice", "Bob", b"Hello, Bob!")
+    msg = Message(to="Bob", body="Hello, Bob!")
     channel.send(msg)
 
 
 def bob(channel: Channel) -> None:
-    channel.receive("Bob")
+    channel.receive()
 
 
 def mallory(channel: Channel) -> None:

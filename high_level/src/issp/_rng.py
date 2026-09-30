@@ -1,16 +1,13 @@
 import itertools
-import os
-import secrets
-import string
 import threading
 import time
-from collections.abc import Iterable, Iterator, Sequence
+from collections.abc import Iterable, Iterator
 from typing import Any
 
-from . import _log as log
 from ._bytes import byte_size, xor
-from ._crypto import AES256, CTR, BlockCipher, StreamCipher
+from ._crypto import AES128, CTR, BlockCipher, StreamCipher
 from ._hash import sha256
+from ._random import random_bytes
 from ._verify import HMAC, SHA1, Hash
 
 
@@ -136,7 +133,7 @@ class HashRNG(RNG[bytes]):
 
     def __init__(self, hash_fn: Hash) -> None:
         self._hash = hash_fn
-        self._stream = self._new_stream(int.from_bytes(os.urandom(hash_fn.code_size)))
+        self._stream = self._new_stream(int.from_bytes(random_bytes(hash_fn.code_size)))
 
     def __next__(self) -> int:
         return next(self._stream)
@@ -156,7 +153,7 @@ class ANSIx917(RNG[bytes]):
     VALUE_SIZE = 8
 
     def __init__(self, cipher: BlockCipher | None = None) -> None:
-        self._cipher = cipher or AES256()
+        self._cipher = cipher or AES128()
         self._state = bytes(self._cipher.block_size)
 
     def __next__(self) -> int:
@@ -173,13 +170,13 @@ class TRNG(RNG[bytes]):
     """True Random Number Generator."""
 
     @staticmethod
-    def _urandom_stream() -> Iterator[int]:
+    def _random_stream() -> Iterator[int]:
         while True:
-            yield from os.urandom(1024)
+            yield from random_bytes(1024)
 
     def __init__(self) -> None:
         super().__init__()
-        self._stream = self._urandom_stream()
+        self._stream = self._random_stream()
 
     def __next__(self) -> int:
         return next(self._stream)
@@ -198,7 +195,7 @@ class Fortuna(CipherRNG):
         reseed_length: int = 120,
         accumulation_rate: float = 1.0,
     ) -> None:
-        super().__init__(CTR(AES256()))
+        super().__init__(CTR(AES128()))
         self._sources = tuple(sources)
         self._pools = tuple(bytearray() for _ in range(pools))
         self._reseed_length = reseed_length
@@ -225,19 +222,13 @@ class Fortuna(CipherRNG):
         return entropy
 
     def _reseed(self) -> None:
-        log.debug("[Fortuna] Reseeding...")
         self._reseed_count += 1
         self.set_seed(sha256(self._cipher.key + sha256(self._key_entropy())))
 
     def __next__(self) -> int:
-        self._log_pool_sizes()
         if len(self._pools[0]) >= self._reseed_length:
             self._reseed()
         return super().__next__()
-
-    def _log_pool_sizes(self) -> None:
-        sizes = ", ".join(f"P{i}: {len(pool)} B" for i, pool in enumerate(self._pools))
-        log.debug("[Fortuna] %s", sizes)
 
 
 class OTP(RNG[int]):
@@ -299,45 +290,3 @@ class TOTP(RNG[int]):
 
     def set_seed(self, seed: int) -> None:
         self._epoch = seed
-
-
-def random_bytes(size: int) -> bytes:
-    """
-    Generate random bytes using the system's secure random number generator.
-
-    :param size: The number of random bytes to generate.
-    :return: A bytes object containing random bytes.
-    """
-    return secrets.token_bytes(size)
-
-
-def random_string(length: int, charset: str = string.printable) -> str:
-    """
-    Generate a random string of the specified length using the given character set.
-
-    :param length: The length of the random string.
-    :param charset: The character set to use for generating the string.
-    :return: A random string.
-    """
-    return "".join(secrets.choice(charset) for _ in range(length))
-
-
-def random_int(min_value: int = 0, max_value: int = 2**32 - 1) -> int:
-    """
-    Generate a random integer within the specified range.
-
-    :param min_value: The minimum value (inclusive).
-    :param max_value: The maximum value (inclusive).
-    :return: A random integer within the specified range.
-    """
-    return secrets.randbelow(max_value - min_value + 1) + min_value
-
-
-def random_choice[T](sequence: Sequence[T]) -> T:
-    """
-    Select a random element from the given sequence.
-
-    :param sequence: The sequence to choose from.
-    :return: A randomly selected element from the sequence.
-    """
-    return secrets.choice(sequence)

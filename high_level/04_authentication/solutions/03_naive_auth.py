@@ -17,10 +17,9 @@
 # - The `request` method of the `Channel` class is a shorthand for sending a message and waiting
 #   for a response.
 
-import os
 from typing import Any
 
-from issp import HMAC, Actor, BankServer, ChaCha20, Channel, Message, run_main, scrypt
+from issp import HMAC, Actor, BankServer, ChaCha20, Channel, Message, random_bytes, run_main, scrypt
 
 
 class Server(BankServer):
@@ -29,7 +28,7 @@ class Server(BankServer):
             return False
 
         self.db[sender] = {
-            "salt": (salt := os.urandom(16)),
+            "salt": (salt := random_bytes(16)),
             "password": scrypt(body["password"], salt=salt),
             "balance": body["balance"],
         }
@@ -42,7 +41,7 @@ class Server(BankServer):
 
 
 def server(alice_channel: Channel) -> None:
-    Server("Server", {"Alice": alice_channel}).listen()
+    Server({"Alice": alice_channel}).listen()
 
 
 def alice(channel: Channel) -> None:
@@ -52,7 +51,7 @@ def alice(channel: Channel) -> None:
         "password": password,
         "balance": 100000.0,
     }
-    channel.request(Message("Alice", "Server", msg))
+    channel.request(Message(to="Server", body=msg))
 
     msg = {
         "action": "perform_transaction",
@@ -60,7 +59,7 @@ def alice(channel: Channel) -> None:
         "recipient": "Mallory",
         "amount": 1000.0,
     }
-    channel.request(Message("Alice", "Server", msg))
+    channel.request(Message(to="Server", body=msg))
 
 
 def mallory(channel: Channel) -> None:
@@ -69,7 +68,7 @@ def mallory(channel: Channel) -> None:
         "password": "s3cr3t",
         "balance": 1000.0,
     }
-    channel.request(Message("Mallory", "Server", msg))
+    channel.request(Message(to="Server", body=msg))
 
     channel.wait(2)
     msg = channel.peek()

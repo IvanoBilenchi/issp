@@ -39,7 +39,7 @@ class Fortuna(RNG[bytes]):
 
     def _reseed(self) -> None:
         self.reseed_count += 1
-        log.debug("[Fortuna] Reseed %d...", self.reseed_count)
+        log.debug("Reseed %d...", self.reseed_count)
         # TO-DO: Accumulate entropy from a subset of the pools and set the new seed.
 
     def __next__(self) -> int:
@@ -52,7 +52,7 @@ class Fortuna(RNG[bytes]):
 
     def _log_pool_sizes(self) -> None:
         sizes = ", ".join(f"P{i}: {len(pool)} B" for i, pool in enumerate(self.pools))
-        log.debug("[Fortuna] %s", sizes)
+        log.debug("Pool sizes: %s", sizes)
 
     def set_seed(self, seed: bytes) -> None:
         # TO-DO: Implement.
@@ -65,7 +65,7 @@ def main() -> None:
     rng = Fortuna(sources)
     for i, value in enumerate(rng):
         time.sleep(1.0)
-        log.info("[Fortuna] Value %d: %d", i + 1, value)
+        log.info("RNG value %d: %d", i + 1, value)
 
 
 if __name__ == "__main__":

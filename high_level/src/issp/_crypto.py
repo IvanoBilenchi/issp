@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import math
-import os
 from typing import TYPE_CHECKING
 
 from cryptography.hazmat.primitives import ciphers, serialization
@@ -14,6 +13,7 @@ from cryptography.hazmat.primitives.ciphers import algorithms, modes
 from ._bytes import blocks, split, xor
 from ._comm import Layer, Message
 from ._pad import pkcs1v15_unpad, pkcs7_pad, pkcs7_unpad
+from ._random import random_bytes
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -67,7 +67,7 @@ class Cipher(Layer):
 
     def generate_iv(self) -> bytes:
         """Generate a random initialization vector (IV)."""
-        return os.urandom(self.iv_size) if self.iv_size else b""
+        return random_bytes(self.iv_size) if self.iv_size else b""
 
     def encode(self, msg: Message) -> Message:
         iv = self.generate_iv()
@@ -94,7 +94,7 @@ class SymmetricCipher(Cipher):
 
     def generate_key(self) -> bytes:
         """Generate a random symmetric key."""
-        return os.urandom(self.key_size)
+        return random_bytes(self.key_size)
 
 
 class BaseSymmetricCipher(SymmetricCipher):
@@ -237,10 +237,9 @@ class OTP(BaseSymmetricCipher, StreamCipher):
         yield from self.key
 
 
-class AES256(BaseSymmetricCipher, BlockCipher):
-    """AES256 cipher."""
+class AES(BaseSymmetricCipher, BlockCipher):
+    """AES cipher."""
 
-    KEY_SIZE = 32
     BLOCK_SIZE = 16
 
     def encrypt(self, data: bytes, *, iv: bytes = b"") -> bytes:
@@ -248,7 +247,7 @@ class AES256(BaseSymmetricCipher, BlockCipher):
         if (data_len := len(data)) != self.block_size:
             msg = f"Data ({data_len} B) must be {self.block_size} B"
             raise ValueError(msg)
-        cipher = ciphers.Cipher(algorithms.AES256(self.key), mode=modes.ECB())  # noqa: S305
+        cipher = ciphers.Cipher(algorithms.AES(self.key), mode=modes.ECB())  # noqa: S305
         return cipher.encryptor().update(data)
 
     def decrypt(self, data: bytes, *, iv: bytes = b"") -> bytes:
@@ -256,8 +255,20 @@ class AES256(BaseSymmetricCipher, BlockCipher):
         if (data_len := len(data)) != self.block_size:
             msg = f"Data ({data_len} B) must be {self.block_size} B"
             raise ValueError(msg)
-        cipher = ciphers.Cipher(algorithms.AES256(self.key), mode=modes.ECB())  # noqa: S305
+        cipher = ciphers.Cipher(algorithms.AES(self.key), mode=modes.ECB())  # noqa: S305
         return cipher.decryptor().update(data)
+
+
+class AES128(AES):
+    """AES-128 cipher."""
+
+    KEY_SIZE = 16
+
+
+class AES256(AES):
+    """AES256 cipher."""
+
+    KEY_SIZE = 32
 
 
 class ChaCha20(BaseSymmetricCipher, StreamCipher):
@@ -377,7 +388,7 @@ class RSAPublicKey(RSAKey):
     @staticmethod
     def _pri_swap_exp(key: rsa.RSAPrivateKey) -> rsa.RSAPrivateKey:
         # Returns a RSAPrivateKey by swapping the private exponent d with the public exponent e.
-        # This hack is needed to "decrypt" with the public key when in sign_mode.
+        # This hack is needed to "decrypt" with the public key.
         pri = key.private_numbers()
         pub = pri.public_numbers
         n_pub = rsa.RSAPublicNumbers(pri.d, pub.n)
@@ -424,7 +435,7 @@ class RSAPrivateKey(RSAKey):
     @staticmethod
     def _pub_swap_exp(key: rsa.RSAPrivateKey) -> rsa.RSAPublicKey:
         # Returns a RSAPublicKey by swapping the public exponent e with the private exponent d.
-        # This hack is needed to "encrypt" with the private key when in sign_mode.
+        # This hack is needed to "encrypt" with the private key.
         n = key.private_numbers()
         return rsa.RSAPublicNumbers(n.d, n.public_numbers.n).public_key()
 
@@ -493,23 +504,45 @@ class Envelope(Cipher):
         return self._sym.decrypt(enc_msg, iv=iv)
 
 
-def aes256_encrypt_block(block: bytes, key: bytes) -> bytes:
+def aes128_encrypt(block: bytes, key: bytes) -> bytes:
     """
-    Encrypt a single 16-byte block with AES256.
+    Encrypt a single 16-byte block with AES-128.
 
     :param block: The 16-byte block to encrypt.
-    :param key: The 32-byte AES256 key.
+    :param key: The 16-byte AES-128 key.
+    :returns: The encrypted 16-byte block.
+    """
+    return AES128(key).encrypt(block)
+
+
+def aes128_decrypt(block: bytes, key: bytes) -> bytes:
+    """
+    Decrypt a single 16-byte block with AES-128.
+
+    :param block: The 16-byte block to decrypt.
+    :param key: The 16-byte AES-128 key.
+    :returns: The decrypted 16-byte block.
+    """
+    return AES128(key).decrypt(block)
+
+
+def aes256_encrypt(block: bytes, key: bytes) -> bytes:
+    """
+    Encrypt a single 16-byte block with AES-256.
+
+    :param block: The 16-byte block to encrypt.
+    :param key: The 32-byte AES-256 key.
     :returns: The encrypted 16-byte block.
     """
     return AES256(key).encrypt(block)
 
 
-def aes256_decrypt_block(block: bytes, key: bytes) -> bytes:
+def aes256_decrypt(block: bytes, key: bytes) -> bytes:
     """
-    Decrypt a single 16-byte block with AES256.
+    Decrypt a single 16-byte block with AES-256.
 
     :param block: The 16-byte block to decrypt.
-    :param key: The 32-byte AES256 key.
+    :param key: The 32-byte AES-256 key.
     :returns: The decrypted 16-byte block.
     """
     return AES256(key).decrypt(block)

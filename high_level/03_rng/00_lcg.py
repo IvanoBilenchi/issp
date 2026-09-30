@@ -39,12 +39,12 @@ class LCG(RNG[int]):
 
 def alice(channel: Channel, rng: LCG) -> None:
     channel = channel.with_stack(ChaCha20(rng.bytes(KEY_SIZE)))
-    channel.send(Message("Alice", "Bob", "Hello, Bob!"))
+    channel.send(Message(to="Bob", body="Hello, Bob!"))
 
 
 def bob(channel: Channel, rng: LCG) -> None:
     channel = channel.with_stack(ChaCha20(rng.bytes(KEY_SIZE)))
-    channel.receive("Bob")
+    channel.receive()
 
 
 def compute_ac(m: int, x0: int, x1: int, x2: int) -> tuple[int, int]:
@@ -73,13 +73,13 @@ def find_lcg_params(values: list[int]) -> tuple[int, int, int]:
     candidate_mods: list[int] = []
 
     for m in candidate_mods:
-        log.info("[Mallory] Trying m = %d...", m)
+        log.info("Trying m = %d...", m)
         try:
             a, c = find_ac(m, values)
         except ValueError:
             continue
         else:
-            log.info("[Mallory] Found LCG params: a = %d, c = %d, m = %d", a, c, m)
+            log.info("Found LCG params: a = %d, c = %d, m = %d", a, c, m)
             return a, c, m
 
     err_msg = "Could not find valid LCG params"
@@ -91,7 +91,7 @@ def mallory(channel: Channel, values: list[int]) -> None:
     try:
         a, c, m = find_lcg_params(values)
     except ValueError as e:
-        log.error("[Mallory] %s", e)
+        log.error("%s", e)
         return
 
     # Recreate the LCG with the found parameters and synchronize it.
@@ -111,7 +111,7 @@ def main() -> None:
     bob_rng = LCG(a, c, m)
 
     for i in range(10):
-        log.info("[LCG] Value %d: %d", i + 1, next(alice_rng))
+        log.info("RNG value %d: %d", i + 1, next(alice_rng))
 
     alice_rng.set_seed(random_int())
     values = [next(alice_rng) for _ in range(mallory_values)]

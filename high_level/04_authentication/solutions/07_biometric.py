@@ -15,7 +15,6 @@
 #   using the `acquire_template()` method.
 # - You can turn distances into similarity scores using the formula: 1 / (1 + distance)
 
-import os
 from typing import Any
 
 from issp import (
@@ -25,6 +24,7 @@ from issp import (
     ChaCha20,
     Channel,
     Message,
+    random_bytes,
     run_main,
 )
 
@@ -38,8 +38,8 @@ def similarity(a: list[float], b: list[float]) -> float:
 
 
 class Server(BankServer):
-    def __init__(self, name: str, channels: Channel | dict[str, Channel]) -> None:
-        super().__init__(name, channels)
+    def __init__(self, channels: Channel | dict[str, Channel]) -> None:
+        super().__init__(channels)
         self.add_handler("request_transaction", self._challenge, auth=False)
         self.add_handler("identify", self._identify, auth=False)
 
@@ -63,7 +63,7 @@ class Server(BankServer):
         return True
 
     def challenge(self, sender: str) -> dict[str, Any]:
-        challenge = os.urandom(16)
+        challenge = random_bytes(16)
         self.db[sender]["challenge"] = challenge
         return {"challenge": challenge}
 
@@ -83,7 +83,7 @@ class Server(BankServer):
 
 
 def server(alice_channel: Channel, mallory_channel: Channel) -> None:
-    Server("Server", {"Alice": alice_channel, "Mallory": mallory_channel}).listen()
+    Server({"Alice": alice_channel, "Mallory": mallory_channel}).listen()
 
 
 def alice(channel: Channel, sensor: BiometricSensor) -> None:
@@ -92,16 +92,16 @@ def alice(channel: Channel, sensor: BiometricSensor) -> None:
         "template": sensor.acquire_template(),
         "balance": 100000.0,
     }
-    channel.request(Message("Alice", "Server", msg))
+    channel.request(Message(to="Server", body=msg))
 
     msg = {
         "action": "identify",
         "template": sensor.acquire_template(),
     }
-    channel.request(Message("Alice", "Server", msg))
+    channel.request(Message(to="Server", body=msg))
 
     msg = {"action": "request_transaction"}
-    msg = channel.request(Message("Alice", "Server", msg)).json_dict()
+    msg = channel.request(Message(to="Server", body=msg)).json_dict()
 
     msg = {
         "action": "perform_transaction",
@@ -110,7 +110,7 @@ def alice(channel: Channel, sensor: BiometricSensor) -> None:
         "recipient": "Mallory",
         "amount": 1000.0,
     }
-    channel.request(Message("Alice", "Server", msg))
+    channel.request(Message(to="Server", body=msg))
 
 
 def mallory(channel: Channel, sensor: BiometricSensor) -> None:
@@ -119,7 +119,7 @@ def mallory(channel: Channel, sensor: BiometricSensor) -> None:
         "template": sensor.acquire_template(),
         "balance": 1000.0,
     }
-    channel.request(Message("Mallory", "Server", message))
+    channel.request(Message(to="Server", body=message))
 
 
 def main() -> None:

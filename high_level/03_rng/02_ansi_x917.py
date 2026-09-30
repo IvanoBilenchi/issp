@@ -1,4 +1,4 @@
-# Implement a variant of the ANSI X9.17 RNG, using AES-256 as the block cipher.
+# Implement a variant of the ANSI X9.17 RNG, using AES-128 as the block cipher.
 # The RNG should produce 64-bit integers.
 #
 # Hints:
@@ -8,15 +8,15 @@
 
 import time
 
-from issp import AES256, RNG, log, run_main
+from issp import AES128, RNG, log, run_main
 
 
 class ANSIx917(RNG[bytes]):
     VALUE_SIZE = 8
 
     def __init__(self) -> None:
-        key = bytes(i for i in range(AES256.KEY_SIZE))
-        self._cipher = AES256(key)
+        key = bytes(i for i in range(AES128.KEY_SIZE))
+        self._cipher = AES128(key)
         self._state = bytes(self._cipher.block_size)
 
     def __next__(self) -> int:
@@ -32,7 +32,7 @@ def main() -> None:
     rng = ANSIx917()
     for i, value in enumerate(rng):
         time.sleep(0.5)
-        log.info("[ANSI x9.17] Value %d: %d", i + 1, value)
+        log.info("RNG value %d: %d", i + 1, value)
 
 
 if __name__ == "__main__":

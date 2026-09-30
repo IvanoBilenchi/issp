@@ -11,6 +11,7 @@ from ._comm import (
     Stack,
 )
 from ._crypto import (
+    AES128,
     AES256,
     CBC,
     CTR,
@@ -29,8 +30,10 @@ from ._crypto import (
     RSAPublicKey,
     StreamCipher,
     SymmetricCipher,
-    aes256_decrypt_block,
-    aes256_encrypt_block,
+    aes128_decrypt,
+    aes128_encrypt,
+    aes256_decrypt,
+    aes256_encrypt,
 )
 from ._hash import (
     scrypt,
@@ -40,6 +43,7 @@ from ._hash import (
 )
 from ._pad import pkcs7_pad, pkcs7_unpad, zero_pad, zero_unpad
 from ._pass import common_passwords, generate_password_database, random_common_password
+from ._random import random_bytes, random_choice, random_int, random_string
 from ._rng import (
     HOTP,
     LCG,
@@ -49,16 +53,13 @@ from ._rng import (
     ANSIx917,
     CipherRNG,
     Fortuna,
-    random_bytes,
-    random_choice,
-    random_int,
-    random_string,
 )
 from ._server import BankServer, FileServer, Server
 from ._util import run_main
 from ._verify import CBCMAC, HMAC, SHA1, SHA256, Hash, Signature, Verifier
 
 __all__ = [
+    "AES128",
     "AES256",
     "CBC",
     "CBCMAC",
@@ -101,8 +102,10 @@ __all__ = [
     "StreamCipher",
     "SymmetricCipher",
     "Verifier",
-    "aes256_decrypt_block",
-    "aes256_encrypt_block",
+    "aes128_decrypt",
+    "aes128_encrypt",
+    "aes256_decrypt",
+    "aes256_encrypt",
     "blocks",
     "byte_size",
     "common_passwords",

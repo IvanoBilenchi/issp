@@ -22,8 +22,8 @@ DEFAULT_SESSION: set[str] = set()  # No active roles
 
 
 class Server(FileServer):
-    def __init__(self, name: str, channels: Channel | dict[str, Channel]) -> None:
-        super().__init__(name, channels)
+    def __init__(self, channels: Channel | dict[str, Channel]) -> None:
+        super().__init__(channels)
         self.add_handler("start_session", self.start_session)
         self.add_handler("end_session", self.end_session)
         self.add_handler("add_role", self.add_role)
@@ -56,46 +56,46 @@ class Server(FileServer):
 
 
 def server(channel: Channel) -> None:
-    Server("Server", channel).listen()
+    Server(channel).listen()
 
 
 def admin(channel: Channel) -> None:
     # No session active, operations should fail.
     msg = {"action": "write", "path": "log.txt", "data": " Written by Admin."}
-    channel.request(Message("Admin", "Server", msg), quiet=True)
+    channel.request(Message(to="Server", body=msg), quiet=True)
 
     msg = {"action": "read", "path": "log.txt"}
-    channel.request(Message("Admin", "Server", msg), quiet=True)
+    channel.request(Message(to="Server", body=msg), quiet=True)
 
     msg = {"action": "add_role", "target": "Service", "role": "writer"}
-    channel.request(Message("Admin", "Server", msg), quiet=True)
+    channel.request(Message(to="Server", body=msg), quiet=True)
 
     # Start a session with "admin" role.
     msg = {"action": "start_session", "roles": ["admin"]}
-    channel.request(Message("Admin", "Server", msg), quiet=True)
+    channel.request(Message(to="Server", body=msg), quiet=True)
 
     # Provide Service with the "reader" role.
     channel.wait_for("Service")
     msg = {"action": "add_role", "target": "Service", "role": "reader"}
-    channel.request(Message("Admin", "Server", msg), quiet=True)
+    channel.request(Message(to="Server", body=msg), quiet=True)
 
 
 def service(channel: Channel) -> None:
     # Trying to start a session with "reader" role, which is not assigned.
     msg = {"action": "start_session", "roles": ["reader"]}
-    channel.request(Message("Service", "Server", msg), quiet=True)
+    channel.request(Message(to="Server", body=msg), quiet=True)
 
     # Trying to start a session with "reader" role, which is now assigned.
     msg = {"action": "start_session", "roles": ["reader"]}
-    channel.request(Message("Service", "Server", msg), quiet=True)
+    channel.request(Message(to="Server", body=msg), quiet=True)
 
     # Write operation should fail.
     msg = {"action": "write", "path": "log.txt", "data": " Written by Service."}
-    channel.request(Message("Service", "Server", msg), quiet=True)
+    channel.request(Message(to="Server", body=msg), quiet=True)
 
     # Read operation should succeed.
     msg = {"action": "read", "path": "log.txt"}
-    channel.request(Message("Service", "Server", msg), quiet=True)
+    channel.request(Message(to="Server", body=msg), quiet=True)
 
 
 def main() -> None:

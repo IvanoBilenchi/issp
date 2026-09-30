@@ -1,4 +1,3 @@
-import os
 from functools import cached_property
 
 from ._bytes import blocks, split, xor
@@ -6,6 +5,7 @@ from ._comm import Layer, Message
 from ._crypto import BlockCipher, Cipher
 from ._hash import sha1, sha256
 from ._pad import pkcs7_pad, zero_pad
+from ._random import random_bytes
 
 
 class Verifier(Layer):
@@ -120,7 +120,7 @@ class HMAC(Verifier):
         self._hash = hash_fn or SHA256()
         self._o_pad_val = b"\x5c" * self._hash.block_size
         self._i_pad_val = b"\x36" * self._hash.block_size
-        self.key = key or os.urandom(self._hash.block_size)
+        self.key = key or random_bytes(self._hash.block_size)
         super().__init__()
 
     def compute_code(self, data: bytes) -> bytes:

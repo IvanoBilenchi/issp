@@ -44,16 +44,16 @@ class SHA256RNG(RNG[int]):
 
 def alice(channel: Channel, rng: SHA256RNG) -> None:
     channel = channel.with_stack(ChaCha20(rng.bytes(KEY_SIZE)) | HMAC(key=rng.bytes(KEY_SIZE)))
-    channel.send(Message("Alice", "Bob", "Hello, Bob!"))
+    channel.send(Message(to="Bob", body="Hello, Bob!"))
 
 
 def bob(channel: Channel, rng: SHA256RNG) -> None:
     channel = channel.with_stack(ChaCha20(rng.bytes(KEY_SIZE)) | HMAC(key=rng.bytes(KEY_SIZE)))
-    channel.receive("Bob")
+    channel.receive()
 
 
 def mallory(channel: Channel) -> None:
-    msg = channel.receive()
+    msg = channel.receive("*")
 
     enc_key = bytes(KEY_SIZE)
     mac_key = bytes(KEY_SIZE)
@@ -70,7 +70,7 @@ def main() -> None:
     alice_rng = SHA256RNG()
 
     for i in range(10):
-        log.info("[SHA256 RNG] Value %d: %d", i + 1, next(alice_rng))
+        log.info("RNG value %d: %d", i + 1, next(alice_rng))
 
     seed = 12345
     bob_rng = SHA256RNG()

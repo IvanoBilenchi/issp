@@ -10,7 +10,7 @@
 #   security stack. The stack is used to encode messages before sending them and to decode
 #   messages after receiving them. The transformations applied by the stack depend
 #   on the layers it contains. As an example, the KDC channel for Alice has a stack that
-#   provides both confidentiality and authenticity via AES256 CBC encryption and HMAC-SHA256
+#   provides both confidentiality and authenticity via AES-128 CBC encryption and HMAC-SHA256
 #   message authentication.
 # - The KDC expects a message from anyone. The message body must be the name of the
 #   person with whom the sender wants to communicate. Once the KDC receives such a message,
@@ -20,9 +20,19 @@
 #   (in which case you will also need to handle the IV), or use the `with_stack` method
 #   of the `Channel` class to create a new channel, passing the ChaCha20 layer as the stack.
 
-import os
-
-from issp import AES256, CBC, HMAC, SHA256, Actor, Channel, Message, Plaintext, log, run_main
+from issp import (
+    AES128,
+    CBC,
+    HMAC,
+    SHA256,
+    Actor,
+    Channel,
+    Message,
+    Plaintext,
+    log,
+    random_bytes,
+    run_main,
+)
 
 
 def alice(plain_channel: Channel, kdc_channel: Channel) -> None:
@@ -40,9 +50,9 @@ def bob(plain_channel: Channel, kdc_channel: Channel) -> None:
 def kdc(plain_channel: Channel, alice_channel: Channel, bob_channel: Channel) -> None:
     channels = {"Alice": alice_channel, "Bob": bob_channel}
 
-    log.info("[KDC] Listening...")
+    log.info("Listening...")
     while True:
-        msg = plain_channel.receive("KDC", timeout=10.0)
+        msg = plain_channel.receive(timeout=10.0)
 
         if msg.is_empty:
             break
@@ -50,16 +60,16 @@ def kdc(plain_channel: Channel, alice_channel: Channel, bob_channel: Channel) ->
         if msg.sender not in channels:
             continue
 
-        key = os.urandom(32)
+        key = random_bytes(32)
         sender = msg.sender
         sender_channel = channels[sender]
         msg = sender_channel.stack.decode(msg)
-        log.info("[KDC] Decoded: %s", msg)
+        log.info("Decoded: %s", msg)
         recipient = msg.body.decode()
         recipient_channel = channels[recipient]
 
-        sender_channel.send(Message("KDC", sender, key))
-        recipient_channel.send(Message("KDC", recipient, key))
+        sender_channel.send(Message(to=sender, body=key))
+        recipient_channel.send(Message(to=recipient, body=key))
 
 
 def mallory(channel: Channel) -> None:
@@ -71,8 +81,8 @@ def mallory(channel: Channel) -> None:
 
 def main() -> None:
     plain = Plaintext()
-    alice_kdc_stack = CBC(AES256()) | HMAC(SHA256())
-    bob_kdc_stack = CBC(AES256()) | HMAC(SHA256())
+    alice_kdc_stack = CBC(AES128()) | HMAC(SHA256())
+    bob_kdc_stack = CBC(AES128()) | HMAC(SHA256())
     Actor.start(
         Actor(alice, stacks=(plain, alice_kdc_stack)),
         Actor(bob, stacks=(plain, bob_kdc_stack)),
