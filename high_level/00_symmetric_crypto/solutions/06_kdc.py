@@ -3,22 +3,22 @@
 # so they must first exchange it. Luckily, they have access to a trusted
 # Key Distribution Center (KDC). Mallory is listening.
 #
-# Exchange the key through the KDC, and then use it to communicate securely.
+# Your task is to have Alice and Bob obtain a shared key through the KDC, and then use it
+# to communicate securely.
 #
 # Hints:
-# - The channel variables are views over the same underlying medium, but each has its own
-#   security stack. The stack is used to encode messages before sending them and to decode
-#   messages after receiving them. The transformations applied by the stack depend
-#   on the layers it contains. As an example, the KDC channel for Alice has a stack that
-#   provides both confidentiality and authenticity via AES-128 CBC encryption and HMAC-SHA256
-#   message authentication.
-# - The KDC expects a message from anyone. The message body must be the name of the
-#   person with whom the sender wants to communicate. Once the KDC receives such a message,
-#   it generates a random key and sends it to both the sender and the recipient.
+# - The channel parameters are views over the same underlying medium, but each has its own
+#   security stack, which encodes messages before sending them and decodes them after
+#   receiving them. What the stack does depends on the layers it contains. For example,
+#   the KDC channel of Alice has a stack that provides both confidentiality and authenticity
+#   through AES-128 CBC encryption and HMAC-SHA256 message authentication.
+# - To request a key, send a message to the KDC over your KDC channel. The message body must
+#   be the name of the actor you want to communicate with. The KDC then generates a random key
+#   and sends it to both the sender and the recipient over their respective KDC channels.
 # - Use the `ChaCha20` class from the `issp` module for encryption and decryption.
-#   You may either encrypt and decrypt manually, using the `encrypt` and `decrypt` methods
-#   (in which case you will also need to handle the IV), or use the `with_stack` method
-#   of the `Channel` class to create a new channel, passing the ChaCha20 layer as the stack.
+#   You may either call its `encrypt` and `decrypt` methods directly (in which case you will
+#   also need to handle the IV), or pass a ChaCha20 layer to the `with_stack` method
+#   of the `Channel` class to obtain a channel that encrypts and decrypts automatically.
 
 from issp import (
     AES128,

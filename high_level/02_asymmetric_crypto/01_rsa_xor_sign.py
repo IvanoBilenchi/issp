@@ -1,22 +1,23 @@
 # Alice and Bob want to exchange messages over an insecure channel.
-# They decide to use RSA signatures to ensure their authenticity and integrity, though they
-# feel adventurous and decide to implement their own hash function based on XOR.
+# They decide to use RSA signatures to ensure their authenticity and integrity, but they
+# feel adventurous and implement their own hash function based on XOR.
 # Mallory is an attacker who has access to the communication channel between Alice and Bob.
 #
 # Your task is to:
-# 1. Implement an 8 bytes XOR hash function.
+# 1. Implement an 8-byte XOR hash function.
 # 2. Allow Mallory to forge an arbitrary message that passes Bob's authenticity check.
 #
 # Hints:
-# - The XOR hash function should process the input data in 8-byte blocks, XORing
-#   each block with the current hash value (starting from zero).
+# - The XOR hash function should zero-pad the input data to a multiple of 8 bytes, then
+#   process it in 8-byte blocks, XORing each block with the current hash value
+#   (which is initially all zeros).
 # - Refer to the lecture slides for details on how to forge an arbitrary message
 #   when the hash function is based on XOR.
 
 
 from issp import RSA, Actor, Channel, Hash, Message, Signature, run_main
 
-SIGNATURE_SIZE = 256  # RSA signature size in bytes
+SIGNATURE_SIZE = 256  # RSA-2048 signature size in bytes.
 
 
 class XOR8(Hash):

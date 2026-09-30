@@ -5,8 +5,8 @@
 # Your task is to help Mallory crack as many passwords as possible using a dictionary attack.
 #
 # Hints:
-# - You can either precompute all hashed passwords for all salt values, or just
-#   compute hashes on-the-fly as needed. Which approach is more efficient, and why?
+# - You can either precompute the hashes of all passwords for all salt values, or compute
+#   them on the fly as needed. Which approach is more efficient, and why?
 
 from itertools import islice
 

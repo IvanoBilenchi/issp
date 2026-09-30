@@ -4,7 +4,7 @@
 #
 # Your task is to:
 # 1. Implement a digital envelope scheme using RSA and ChaCha20.
-# 2. Allow Mallory to tamper with the communication. Can she also eavesdrop? Why?
+# 2. Allow Mallory to tamper with the communication. Can she also eavesdrop? Why or why not?
 
 
 from issp import RSA, Actor, AsymmetricKey, ChaCha20, Channel, Message, log, random_bytes, run_main
@@ -27,7 +27,7 @@ def decrypt(data: bytes, rsa_key: AsymmetricKey) -> bytes:
 
 def alice(channel: Channel, keychain: dict[str, AsymmetricKey], pri_key: AsymmetricKey) -> None:
     msg = Message(to="Bob", body="Hello, Bob!")
-    log.info("Encrypted: %s", msg)
+    log.info("Wants to send: %s", msg)
     msg.body = encrypt(msg.body, keychain[msg.recipient])
     channel.send(msg)
 

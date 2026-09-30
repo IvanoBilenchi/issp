@@ -1,10 +1,11 @@
 # Mallory wants to gain unauthorized access to a system by cracking the administrator's password.
-# She manages to obtain the hashed password. Luckily for her, the password has been hashed
-# using a fast hash function and is known to consist of only lowercase letters.
+# She manages to obtain the hashed password. Luckily for her, it has been hashed using a fast
+# hash function, and it is known to consist only of lowercase letters.
 #
 # Your task is to crack the password using a brute-force attack.
 #
-# Hint: Use the `generate_bytes` function from `issp` to generate possible passwords.
+# Hints:
+# - Use the `generate_bytes` function from `issp` to generate candidate passwords.
 
 import string
 

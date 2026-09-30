@@ -4,7 +4,7 @@
 # over the same insecure channel.
 # Mallory is an attacker who has access to the communication channel between Alice and Bob.
 #
-# Allow Mallory to impersonate Alice when communicating with Bob.
+# Your task is to allow Mallory to impersonate Alice when communicating with Bob.
 
 
 from issp import RSA, Actor, Channel, Message, Signature, run_main

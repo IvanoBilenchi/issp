@@ -1,14 +1,14 @@
 # Alice and Bob want to exchange messages over an insecure channel.
 # They decide to use a symmetric cipher to ensure their confidentiality.
 # To make their communication more secure, they opt to use random ephemeral keys (good)
-# generated using a Linear Congruential Generator (LCG) (bad), for which
-# they previously agreed on the parameters and initial state.
+# generated using a Linear Congruential Generator (LCG) (bad), whose parameters and
+# initial state they previously agreed on.
 #
 # Mallory is an attacker who has access to the communication channel between Alice and Bob.
 # Moreover, Mallory:
 # - Knows that Alice and Bob are using an LCG for key generation.
 # - Has access to several consecutive outputs of their LCG.
-# - Knows that the modulus 'm' is either a power of two or a Mersenne prime (2^e - 1).
+# - Knows that the modulus `m` is either a power of two or a Mersenne prime (2^e - 1).
 #
 # Your task is to:
 # 1. Implement the LCG RNG.
@@ -48,8 +48,8 @@ def bob(channel: Channel, rng: LCG) -> None:
 
 
 def compute_ac(m: int, x0: int, x1: int, x2: int) -> tuple[int, int]:
-    # TO-DO: Solve the system of equations to find 'a' and 'c',
-    #        given 'm' and three consecutive outputs.
+    # TO-DO: Solve the system of equations to find `a` and `c`,
+    #        given `m` and three consecutive outputs.
     #        Eq 1: x1 = a * x0 + c (mod m)
     #        Eq 2: x2 = a * x1 + c (mod m)
     #        Note: Python's pow function can compute modular inverses when given a negative

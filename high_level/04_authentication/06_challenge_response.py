@@ -4,14 +4,15 @@
 # challenge-response protocol.
 #
 # Your task is to implement the challenge-response protocol according to the following spec:
-# - h = scrypt
-# - f = h(challenge || h(password))
-# - challenge = random 16-byte nonce
+# - H = scrypt
+# - F = H(challenge || H(password))
+# - Challenge = random 16-byte nonce
 #
 # Hints:
-# - The endpoint to request the challenge is the "request_transaction" action.
-# - You can obtain a JSON representation of a message's body using the `json_dict()` method.
-# - Since passwords are salted, you need to return the salt along with the challenge.
+# - Alice requests the challenge through the "request_transaction" action,
+#   which the server handles by calling its `challenge` method.
+# - You can decode a JSON message body into a dictionary using the `json_dict()` method.
+# - Since passwords are salted, the server must return the salt along with the challenge.
 
 from typing import Any
 

@@ -2,8 +2,9 @@
 # the confidentiality of messages exchanged between Alice and Bob.
 #
 # Hints:
-# - You may use the `pkcs7_pad` and `pkcs7_unpad` functions from the `issp` module for
-#   a secure and unambiguous padding scheme.
+# - Use the `aes128_encrypt` and `aes128_decrypt` functions from the `issp` module.
+# - For padding, you may use the `pkcs7_pad` and `pkcs7_unpad` functions from the `issp`
+#   module, which implement an unambiguous padding scheme.
 
 from issp import (
     Actor,
@@ -47,7 +48,7 @@ def decrypt(data: bytes, key: bytes, iv: bytes) -> bytes:
 
 def alice(channel: Channel, key: bytes) -> None:
     msg = Message(to="Bob", body="Here is the top-secret PIN, keep it safe: 42")
-    log.info("Encrypted: %s", msg)
+    log.info("Wants to send: %s", msg)
     iv = random_bytes(BLOCK_SIZE)
     msg.body = iv + encrypt(pkcs7_pad(msg.body, BLOCK_SIZE), key, iv)
     channel.send(msg)

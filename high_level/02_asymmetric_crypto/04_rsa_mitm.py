@@ -4,7 +4,7 @@
 # over the same insecure channel.
 # Mallory is an attacker who has access to the communication channel between Alice and Bob.
 #
-# Allow Mallory to impersonate Alice when communicating with Bob.
+# Your task is to allow Mallory to impersonate Alice when communicating with Bob.
 
 
 from issp import RSA, Actor, Channel, Message, Signature, run_main
@@ -31,7 +31,7 @@ def bob(channel: Channel) -> None:
 
 
 def mallory(channel: Channel) -> None:
-    # TO-DO: Delete this code and implement Mallory's attack.
+    # TO-DO: Replace this code with an implementation of Mallory's attack.
     channel.peek()
     channel.wait()
     channel.peek()

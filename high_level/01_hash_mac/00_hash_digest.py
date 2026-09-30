@@ -23,7 +23,7 @@ def verify(data: bytes, digest: bytes) -> bool:
 def alice(channel: Channel) -> None:
     msg = Message(to="Bob", body="Hello, Bob!")
     log.info("Wants to send: %s", msg)
-    # TO-DO: Compute the SHA-256 hash of the message body and prepend it to the message.
+    # TO-DO: Compute the SHA-256 digest of the message body and prepend it to the body.
     channel.send(msg)
 
 

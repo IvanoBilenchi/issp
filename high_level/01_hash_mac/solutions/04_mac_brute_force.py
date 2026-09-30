@@ -1,10 +1,10 @@
 # Alice and Bob want to exchange messages over an insecure channel.
-# They decide to use HMAC to ensure their authenticity and integrity, but they opt
-# to use a 4-digit PIN instead of a randomly generated key so that it is easier to remember.
+# They decide to use HMAC to ensure their authenticity and integrity, but they opt to use
+# a 4-digit PIN instead of a randomly generated key, so that it is easier to remember.
 # Mallory is an attacker who has access to the communication channel between Alice and Bob.
 #
-# Allow Mallory to obtain the key by brute-forcing the first message,
-# and then use it to tamper with the second message.
+# Your task is to allow Mallory to obtain the key by brute-forcing the HMAC of the first
+# message, and then use it to tamper with the second message.
 #
 # Hints:
 # - Use the `generate_bytes` function of the `issp` module to generate possible keys.

@@ -2,7 +2,7 @@
 # using the One-Time Pad (OTP) encryption algorithm. However, they do not share a secret key,
 # so they must first exchange it. Mallory is listening.
 #
-# Allow Mallory to:
+# Your task is to allow Mallory to:
 # 1. Eavesdrop on the communication between Alice and Bob.
 # 2. Tamper with the message sent by Alice to Bob.
 
@@ -22,7 +22,7 @@ def alice(channel: Channel) -> None:
     channel.send(Message(to="Bob", body=key))
 
     msg = Message(to="Bob", body="Hello, Bob!")
-    log.info("Encrypted: %s", msg)
+    log.info("Wants to send: %s", msg)
     msg.body = xor(msg.body, key)
     channel.send(msg)
 
@@ -46,7 +46,7 @@ def mallory(channel: Channel) -> None:
     log.info("Decrypted: %s", msg)
 
     msg.body = "Screw you, Bob!"
-    log.info("Encrypted: %s", msg)
+    log.info("Wants to send: %s", msg)
     msg.body = encrypt(msg.body, key)
     channel.send(msg)
 

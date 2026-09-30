@@ -1,18 +1,20 @@
 # Alice owes a sum of money to Mallory, which she wants to pay back. To do so, they decide
 # to register with an online service that will facilitate the transaction.
-# To make the authentication more secure, the service requires the use of two-factor
-# authentication, where the second factor is a 6 digit one-time password (OTP) generated
-# using the Time-based One-Time Password (TOTP) algorithm, which changes every 30 seconds.
+# To make the authentication more secure, the service requires two-factor authentication,
+# where the second factor is a 6-digit one-time password (OTP) generated using the
+# Time-based One-Time Password (TOTP) algorithm, which changes every 30 seconds.
 #
 # Your task is to:
-# 1. Implement the TOTP algorithm and integrate it into the authentication protocol.
+# 1. Implement the TOTP algorithm.
 # 2. Integrate TOTP-based authentication into the existing protocol.
-# 3. Verify that the protocol is no longer vulnerable to replay attacks.
-#    Is this the case? Why? Can you think of a fix?
+# 3. Check whether the protocol is still vulnerable to replay attacks.
+#    Is it? Why? Can you think of a fix?
 #
 # Hints:
 # - The starting point for this exercise is the solution to the "naive authentication"
-#   exercise. You will need to fix the replay vulnerability by adding TOTP-based authentication.
+#   exercise, which is vulnerable to replay attacks.
+# - TOTP is HOTP where the counter is the number of `PERIOD`-second intervals elapsed
+#   since the epoch. Truncate the HMAC output as in the HOTP exercise.
 
 from typing import Any
 

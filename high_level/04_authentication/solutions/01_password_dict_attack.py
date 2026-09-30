@@ -6,7 +6,7 @@
 #
 # Hints:
 # - Use the `common_passwords` function from `issp` to get a list of common passwords.
-# - The dictionary should countain password hashes as keys and plaintext passwords as values.
+# - Precompute a dictionary that maps password hashes to the corresponding plaintext passwords.
 
 from itertools import islice
 

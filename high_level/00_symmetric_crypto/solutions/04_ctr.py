@@ -3,8 +3,8 @@
 #
 # Hints:
 # - Since CTR mode turns a block cipher into a stream cipher, no padding is needed.
-# - Remember that both encryption and decryption for stream ciphers can be implemented
-#   as the XOR of the data with the keystream.
+# - Remember that, for stream ciphers, both encryption and decryption consist of XORing
+#   the data with the keystream.
 
 from collections.abc import Iterator
 
@@ -40,7 +40,7 @@ def decrypt(data: bytes, key: bytes, iv: bytes) -> bytes:
 
 def alice(channel: Channel, key: bytes) -> None:
     msg = Message(to="Bob", body="Here is the top-secret PIN, keep it safe: 42")
-    log.info("Encrypted: %s", msg)
+    log.info("Wants to send: %s", msg)
     iv = random_bytes(BLOCK_SIZE)
     msg.body = iv + encrypt(msg.body, key, iv)
     channel.send(msg)

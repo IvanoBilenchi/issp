@@ -3,7 +3,7 @@
 # - Assume that all users are already authenticated.
 # - The scheme should support the concept of roles, role assignments, and sessions.
 # - Users may have multiple roles.
-# - No explicit access rights are required to start and end sessions: anyone can do it.
+# - Starting and ending sessions requires no explicit access rights: anyone can do it.
 # - Roles are as follows:
 #   - "reader" can read the log file.
 #   - "writer" can write to the log file.

@@ -1,14 +1,14 @@
 # Implement a Mandatory Access Control (MAC) scheme based on the Bell-LaPadula model.
 #
 # - Assume that all users are already authenticated.
-# - Alice, Bob, and Carl have different security clearances. Bob has clearance
-#   for confidential files, Carl for secret files, while Alice does not have an explicit clearance.
+# - Alice, Bob, and Carl have different security clearances: Bob has clearance
+#   for confidential files, Carl for secret files, while Alice has no explicit clearance.
 # - You must implement the ss-property and the *-property.
 # - Make sure to implement fail-safe defaults.
 #
 # Hints:
 # - Authorization decisions should be based on the "action" and "path" fields in the message body.
-# - To avoid clutter, access control exercises only log activities as seen from the server side.
+# - To avoid clutter, access control exercises only log activity from the server side.
 
 from typing import Any
 

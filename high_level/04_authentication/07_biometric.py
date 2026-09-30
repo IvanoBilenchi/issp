@@ -1,19 +1,22 @@
 # Alice owes a sum of money to Mallory, which she wants to pay back. To do so, they decide
 # to register with an online service that will facilitate the transaction.
 # The service adopts a biometric challenge-response protocol for authentication.
-# It compares biometric templates via Euclidean distance, and adopts a threshold of 0.95.
+# Two biometric templates match if their similarity score is greater than 0.95.
 #
 # Your task is to:
-# - Implement the challenge-response protocol according to the following spec:
-#   - E = ChaCha20
-#   - Challenge = random 16-byte nonce
-# - Implement biometric identification.
+# 1. Implement the challenge-response protocol according to the following spec:
+#    - E = ChaCha20
+#    - Challenge = random 16-byte nonce
+# 2. Implement biometric identification, i.e., finding the registered user whose template
+#    best matches a given one.
 #
 # Hints:
-# - Alice communicates with the service using ChaCha20, so you don't need to add encryption.
-# - Each actor has a `BiometricSensor` that can be used to acquire biometric templates
-#   using the `acquire_template()` method.
-# - You can turn distances into similarity scores using the formula: 1 / (1 + distance)
+# - Alice's channel with the service is already encrypted with ChaCha20,
+#   so you don't need to add encryption yourself.
+# - Each actor has a `BiometricSensor`, whose `acquire_template()` method
+#   acquires a biometric template.
+# - Compute the similarity score of two templates as 1 / (1 + d), where d is
+#   the Euclidean distance between them.
 
 from typing import Any
 
@@ -62,7 +65,7 @@ class Server(BankServer):
         return False
 
     def identify(self, template: list[float]) -> str | None:
-        # Implement biometric identification.
+        # TO-DO: Implement biometric identification.
         return None
 
 

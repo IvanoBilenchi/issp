@@ -1,7 +1,12 @@
 # Alice and Bob want to exchange messages over an insecure channel.
+# Mallory is an attacker who has access to the communication channel between Alice and Bob.
 #
-# Ensure that their communication is confidential, authentic, and non-repudiable.
-# You must use both a stream cipher and an asymmetric cipher.
+# Your task is to ensure that their communication is confidential, authentic,
+# and non-repudiable, using both a stream cipher and an asymmetric cipher.
+#
+# Hints:
+# - Alice and Bob already share a symmetric key (`sym_key`), and each of them has an RSA
+#   key pair. The `keychain` dictionary maps actor names to their public keys.
 
 
 from issp import (
@@ -55,7 +60,7 @@ def bob(
     body = msg.body[SIGNATURE_SIZE:]
     digest = sha256(body)
     if digest != keychain[msg.sender].decrypt(signature):
-        err_msg = "[Bob] Signature verification failed!"
+        err_msg = "Signature verification failed!"
         raise ValueError(err_msg)
 
     # Decrypt.

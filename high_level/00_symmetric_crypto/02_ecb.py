@@ -3,11 +3,10 @@
 #
 # Hints:
 # - Use the `aes128_encrypt` and `aes128_decrypt` functions from the `issp` module.
-# - Remember that we are dealing with a block cipher, so you might need to add padding
-#   to the plaintext to make its length a multiple of the block size. For simplicity,
-#   you can use zero padding (i.e., append zero bytes to the plaintext), though be aware
-#   that this is not a secure padding scheme and it does not account for the case where
-#   the plaintext actually ends with zero bytes.
+# - Since AES is a block cipher, the plaintext must be padded so that its length is
+#   a multiple of the block size. For simplicity, use zero padding (i.e., append zero bytes
+#   to the plaintext), but be aware that it is ambiguous: it cannot tell padding apart
+#   from a plaintext that actually ends with zero bytes.
 
 from issp import Actor, Channel, Message, log, random_bytes, run_main
 
@@ -36,7 +35,7 @@ def decrypt(data: bytes, key: bytes) -> bytes:
 
 def alice(channel: Channel, key: bytes) -> None:
     msg = Message(to="Bob", body="Here is the top-secret PIN, keep it safe: 42")
-    log.info("Encrypted: %s", msg)
+    log.info("Wants to send: %s", msg)
     # TO-DO: Encrypt the message body.
     channel.send(msg)
 

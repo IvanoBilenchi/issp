@@ -26,7 +26,7 @@ def verify(data: bytes, mac: bytes, key: bytes) -> bool:
 def alice(channel: Channel, key: bytes) -> None:
     msg = Message(to="Bob", body="Hello, Bob!")
     log.info("Wants to send: %s", msg)
-    # TO-DO: Compute the MAC and prepend it to the message.
+    # TO-DO: Compute the MAC and prepend it to the message body.
     channel.send(msg)
 
 

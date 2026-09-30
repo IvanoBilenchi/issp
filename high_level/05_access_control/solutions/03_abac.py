@@ -10,10 +10,10 @@
 # - The environment has the following attributes:
 #   - "date" (datetime): the current date.
 # - The following policies must be enforced:
-#   - Rating policy: a user can watch a movie if they are old enough for its rating.
-#                    (G: no restrictions, PG-13: 13+, R: 17+)
+#   - Rating policy: a user can watch a movie only if they are old enough for its rating
+#                    (G: no restrictions, PG-13: 13+, R: 17+).
 #   - Release policy: movies released in 2023 or later can only be watched by paying users,
-#                     unless we are in a promotional period (between December 25 and December 31).
+#                     except during the promotional period (from December 25 to December 31).
 # - Make sure to implement fail-safe defaults for missing attributes.
 
 import datetime
@@ -79,6 +79,7 @@ class Server(FileServer):
         def release_policy(s: dict[str, Any], o: dict[str, Any], e: dict[str, Any]) -> bool:
             return paying_rule(s, o, e) or promo_rule(s, o, e)
 
+        # In this simple system, policies are applied based on the requested action.
         self.policies = {
             "read": [rating_policy, release_policy],
         }

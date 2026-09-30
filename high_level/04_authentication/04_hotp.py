@@ -1,19 +1,19 @@
 # Alice owes a sum of money to Mallory, which she wants to pay back. To do so, they decide
 # to register with an online service that will facilitate the transaction.
-# To make the authentication more secure, the service requires the use of two-factor
-# authentication, where the second factor is a 6 digit one-time password (OTP) generated
-# using the HMAC-based One-Time Password (HOTP) algorithm.
+# To make the authentication more secure, the service requires two-factor authentication,
+# where the second factor is a 6-digit one-time password (OTP) generated using the
+# HMAC-based One-Time Password (HOTP) algorithm.
 #
 # Your task is to:
-# 1. Implement the HOTP algorithm and integrate it into the authentication protocol.
+# 1. Implement the HOTP algorithm.
 # 2. Integrate HOTP-based authentication into the existing protocol.
 #
 # Hints:
 # - The starting point for this exercise is the solution to the "naive authentication"
-#   exercise. You will need to fix the replay vulnerability by adding HOTP-based authentication.
-# - HOTP generation requires truncating the HMAC output in a specific way. For this exercise,
-#   you can truncate by taking the first 31 bits of the MAC, after converting it to an integer.
-#   This kind of bit manipulation can be done using bitwise operators (in this case, `&`).
+#   exercise. Adding HOTP-based authentication should fix its replay vulnerability.
+# - HOTP requires truncating the HMAC output in a specific way. For this exercise, you can
+#   convert the MAC to an integer and keep its 31 least significant bits, which you can do
+#   with the bitwise AND operator (`&`). Then, reduce the result to `DIGITS` decimal digits.
 
 from typing import Any
 

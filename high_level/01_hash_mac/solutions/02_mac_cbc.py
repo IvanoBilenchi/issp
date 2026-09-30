@@ -7,8 +7,9 @@
 # 2. Allow Mallory to forge an arbitrary message that passes Bob's authenticity check.
 #
 # Hints:
-# - A CBC-MAC is computed by encrypting the message in CBC mode with a zero IV
-#   and taking the last ciphertext block as the MAC.
+# - A CBC-MAC is computed by padding the message to a multiple of the block size,
+#   encrypting it in CBC mode with an all-zero IV, and taking the last ciphertext block
+#   as the MAC.
 # - Refer to the lecture slides for details on how to forge an arbitrary message when the MAC
 #   is based on plain CBC.
 

@@ -10,12 +10,10 @@
 # 2. Help Mallory attack the protocol by replaying Alice's transaction request.
 #
 # Hints:
-# - In this exercise, message bodies are represented as dictionaries. They are serialized
-#   and deserialized automatically as JSON by the `issp` library, so you don't need to worry
-#   about that.
+# - In this exercise, message bodies are dictionaries. The `issp` library automatically
+#   serializes them as JSON, so you don't need to worry about that.
 # - The `Server` class has a `db` dictionary attribute that you can use to store user records.
-# - The `request` method of the `Channel` class is a shorthand for sending a message and waiting
-#   for a response.
+# - The `request` method of the `Channel` class sends a message and waits for the response.
 
 from typing import Any
 

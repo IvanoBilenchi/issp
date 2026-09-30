@@ -3,8 +3,8 @@
 #
 # Hints:
 # - Since CTR mode turns a block cipher into a stream cipher, no padding is needed.
-# - Remember that both encryption and decryption for stream ciphers can be implemented
-#   as the XOR of the data with the keystream.
+# - Remember that, for stream ciphers, both encryption and decryption consist of XORing
+#   the data with the keystream.
 
 from issp import Actor, Channel, Message, log, random_bytes, run_main
 
@@ -17,17 +17,17 @@ def key_stream(key: bytes, iv: bytes, length: int) -> bytes:
     return key
 
 
-# [Optional]: If you're experienced with Python generators, you can instead implement
-# an unbounded version of the keystream function that produces an infinite sequence
-# of keystream bytes. This can be useful for decrypting data of unknown length, and it is also
-# more memory efficient since it does not require storing the entire keystream in memory.
+# [Optional]: If you are familiar with Python generators, you can instead implement
+# an unbounded keystream function that yields an infinite sequence of keystream bytes.
+# This is useful for processing data of unknown length, and it is more memory efficient,
+# since it does not need to store the entire keystream in memory.
 #
 # See the `CTR` class of the `issp` module for an example implementation.
 #
 # def key_stream(key: bytes, iv: bytes) -> Iterator[int]:
-#    while True:
-#        byte = <compute next keystream byte>
-#        yield byte
+#     while True:
+#         byte = <compute next keystream byte>
+#         yield byte
 
 
 def encrypt(data: bytes, key: bytes, iv: bytes) -> bytes:
@@ -42,7 +42,7 @@ def decrypt(data: bytes, key: bytes, iv: bytes) -> bytes:
 
 def alice(channel: Channel, key: bytes) -> None:
     msg = Message(to="Bob", body="Here is the top-secret PIN, keep it safe: 42")
-    log.info("Encrypted: %s", msg)
+    log.info("Wants to send: %s", msg)
     # TO-DO: Encrypt the message body.
     channel.send(msg)
 

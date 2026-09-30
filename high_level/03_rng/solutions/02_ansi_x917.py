@@ -3,7 +3,7 @@
 # Hints:
 # - The RNG should produce 64-bit integers, as denoted by the `VALUE_SIZE` attribute.
 # - The `time.time_ns()` function can be used to get the current timestamp in nanoseconds.
-# - Always work with block-sized (16 bytes) chunks, and truncate the output to the required size.
+# - Always work with block-sized (16-byte) chunks, and truncate the output to the required size.
 
 
 import time

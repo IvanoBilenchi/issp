@@ -2,12 +2,13 @@
 # They decide to use digital signatures to ensure their authenticity and integrity.
 # Mallory is an attacker who has access to the communication channel between Alice and Bob.
 #
-# Implement digital signature generation and verification using RSA and SHA-256.
+# Your task is to implement digital signature generation and verification
+# using RSA and SHA-256.
 #
 # Hints:
-# - Remember that computing and verifying signatures is very similar to computing and verifying
-#   MACs based on the encryption of a message digest. The main difference is that
-#   signatures use asymmetric cryptography, while MACs use symmetric cryptography.
+# - Computing and verifying signatures is very similar to computing and verifying MACs
+#   based on the encryption of a message digest. The main difference is that signatures
+#   use asymmetric cryptography, while MACs use symmetric cryptography.
 # - `AsymmetricKey` objects are `Cipher`s, so they have `encrypt` and `decrypt` methods.
 # - The `keychain` dictionary maps actor names to their public keys.
 
@@ -30,7 +31,7 @@ def verify(data: bytes, signature: bytes, key: AsymmetricKey) -> bool:
 def alice(channel: Channel, keychain: dict[str, AsymmetricKey], pri_key: AsymmetricKey) -> None:
     msg = Message(to="Bob", body="Hello, Bob!")
     log.info("Wants to send: %s", msg)
-    # TO-DO: Compute the signature and prepend it to the message.
+    # TO-DO: Compute the signature and prepend it to the message body.
     channel.send(msg)
 
 

@@ -5,8 +5,8 @@
 # Hints:
 # - Entropy sources are approximated using multiple `TRNG` instances. You can extract
 #   random bytes from these sources using their `bytes` method.
-# - Entropy pools can be seen as bytearrays that accumulate data from the entropy sources.
-# - When using a pool for reseeding, make sure to deskew it by hashing its content, then clear it.
+# - Entropy pools are bytearrays that accumulate data from the entropy sources.
+# - When using a pool for reseeding, deskew it by hashing its content, then clear it.
 
 import threading
 import time
