@@ -3,6 +3,7 @@
 #
 # Hints:
 # - Use the `aes128_encrypt` and `aes128_decrypt` functions from the `issp` module.
+# - For XOR, you may either use your own function or import `xor` from the `issp` module.
 # - For padding, you may use the `pkcs7_pad` and `pkcs7_unpad` functions from the `issp`
 #   module, which implement an unambiguous padding scheme.
 

@@ -5,6 +5,8 @@
 # - Since CTR mode turns a block cipher into a stream cipher, no padding is needed.
 # - Remember that, for stream ciphers, both encryption and decryption consist of XORing
 #   the data with the keystream.
+# - For the initial value of the counter, you can convert the IV to an integer using
+#   `int.from_bytes(iv)`.
 
 from issp import Actor, Channel, Message, log, random_bytes, run_main
 
