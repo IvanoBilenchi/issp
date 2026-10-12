@@ -6,8 +6,7 @@ def zero_pad(data: bytes, size: int) -> bytes:
     :param size: Block size in bytes.
     :return: Padded data.
     """
-    padding = size - len(data) % size
-    return data + bytes(padding) if padding else data
+    return data + bytes(-len(data) % size)
 
 
 def zero_unpad(data: bytes) -> bytes:
