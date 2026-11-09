@@ -4,14 +4,14 @@
 #
 # Your task is to:
 # 1. Implement message authenticity checking using a CBC-MAC scheme based on AES-128.
-# 2. Allow Mallory to forge an arbitrary message that passes Bob's authenticity check.
+# 2. Allow Mallory to forge a new message that passes Bob's authenticity check.
 #
 # Hints:
-# - A CBC-MAC is computed by padding the message to a multiple of the block size,
+# - A CBC-MAC is computed by zero-padding the message to a multiple of the block size,
 #   encrypting it in CBC mode with an all-zero IV, and taking the last ciphertext block
 #   as the MAC.
-# - Refer to the lecture slides for details on how to forge an arbitrary message when the MAC
-#   is based on plain CBC.
+# - Refer to the lecture slides for details on how to forge a new message with the same MAC
+#   when the MAC is based on plain CBC.
 
 
 from issp import Actor, Channel, Message, log, random_bytes, run_main

@@ -4,14 +4,14 @@
 #
 # Your task is to:
 # 1. Implement message authenticity checking using a CBC-MAC scheme based on AES-128.
-# 2. Allow Mallory to forge an arbitrary message that passes Bob's authenticity check.
+# 2. Allow Mallory to forge a new message that passes Bob's authenticity check.
 #
 # Hints:
-# - A CBC-MAC is computed by padding the message to a multiple of the block size,
+# - A CBC-MAC is computed by zero-padding the message to a multiple of the block size,
 #   encrypting it in CBC mode with an all-zero IV, and taking the last ciphertext block
 #   as the MAC.
-# - Refer to the lecture slides for details on how to forge an arbitrary message when the MAC
-#   is based on plain CBC.
+# - Refer to the lecture slides for details on how to forge a new message with the same MAC
+#   when the MAC is based on plain CBC.
 
 
 from issp import (
@@ -20,17 +20,17 @@ from issp import (
     Message,
     aes128_encrypt,
     log,
-    pkcs7_pad,
     random_bytes,
     run_main,
     xor,
+    zero_pad,
 )
 
 BLOCK_SIZE = 16
 
 
 def compute_mac(data: bytes, key: bytes) -> bytes:
-    data = pkcs7_pad(data, BLOCK_SIZE)
+    data = zero_pad(data, BLOCK_SIZE)
     last_block = bytes(BLOCK_SIZE)
     for i in range(0, len(data), BLOCK_SIZE):
         block = data[i : i + BLOCK_SIZE]
@@ -69,7 +69,11 @@ def mallory(channel: Channel) -> None:
         return
 
     msg = channel.receive("*")
-    msg.body = msg.body[:BLOCK_SIZE] + b"Screw you, Bob!"
+    mac = msg.body[:BLOCK_SIZE]
+    body = zero_pad(msg.body[BLOCK_SIZE:], BLOCK_SIZE)
+
+    # The forged message m || (B1 ^ t) || B2 || ... || Bn has the same MAC t as m.
+    msg.body = mac + body + xor(body[:BLOCK_SIZE], mac) + body[BLOCK_SIZE:]
     channel.send(msg)
 
 
