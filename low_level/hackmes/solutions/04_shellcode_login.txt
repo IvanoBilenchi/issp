@@ -1,0 +1,25 @@
+1. The program is affected by a buffer overflow vulnerability.
+
+The problematic line is:
+
+user_input("Password", data.buf, sizeof(data));
+
+The last parameter should instead be `sizeof(data.buf) - 1` (16 bytes - the NULL terminator).
+Since it is considering the size of the whole `data` struct (24 bytes), this allows us
+to overflow the buffer by 8 bytes, writing within the bounds of the `auth_success` pointer.
+
+2. To call the shellcode function, we need to overwrite the `data.auth_success` function pointer
+with the address of the shellcode function. However, unlike the previous exercises, the pointer
+is only called when the authentication *succeeds*, so the overflow alone is not enough: we must
+also make `strcmp(data.buf, "p4ssw0rd")` return 0. This means the input has to start with the
+valid password "p4ssw0rd" followed by a NULL terminator, so that `strcmp` stops there and
+matches, while the bytes past the terminator still overflow the buffer and reach the pointer.
+Since `buf` (16 bytes) is immediately followed by the 8 bytes `auth_success` function pointer,
+with no padding in between, a working malicious input must be structured as follows:
+
+[8 bytes password] [1 NULL byte] [7 arbitrary bytes] [8 bytes shellcode address]
+
+Example (shellcode: 0x104167d08)
+--------------------------------
+Password: p4ssw0rd\00PPPPPPP\08\7d\16\04\01
+You got shell!
