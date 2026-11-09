@@ -43,3 +43,10 @@ is fundamentally insecure. This code is intended strictly for educational purpos
   ```console
   $ build/hackme_00_admin_pass_flag  # Or any other executable.
   ```
+- Each `example-*` program bundles several demos and runs the safe ones by
+  default. Pass one or more demo names to run only those, including a few that
+  crash or abort on purpose and are otherwise skipped.
+  ```console
+  $ build/example_12_dynamic               # Run the safe demos.
+  $ build/example_12_dynamic double_free   # Run a specific (unsafe) demo.
+  ```
